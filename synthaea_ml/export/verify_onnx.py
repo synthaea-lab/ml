@@ -267,7 +267,7 @@ def run(models: Sequence[Path]) -> int:
     # Scenarios live in the sibling `scenarios` repo (ADR-0009: replays bind to their source
     # yaml by content hash). Resolved here, not at import, so `SYNTHAEA_ROOT` is read when the
     # command runs.
-    scenarios = siblings.path("scenarios", "scenarios")
+    scenarios = siblings.scenario_sidecars()
     failures = 0
     for model in targets:
         try:
