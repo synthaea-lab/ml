@@ -176,10 +176,13 @@ from, read for the process ancestry. Writes one JSON line per case to `--output`
 `label` (`scenario`, `harness` for the runner's own processes, `unattributed` when the case's
 parent never appears in the capture, `background` for the host's),
 `scenario`, `techniques`, and, for a scenario with a sidecar, `expected_techniques` and
-`reached_expected` (exact string match, as the scenario replay's `compute_passed`).
+`reached_expected`: whether the case reached any of the sidecar's techniques, matched as exact
+strings. This is any-of per case, not the scenario replay's `compute_passed` (all expected
+`(technique, rule)` pairs with counts), since a scenario's techniques are spread over its cases.
 `--scenario-dir` defaults to the `scenarios` sibling checkout. Logs a summary per label and per
-scenario on stderr. Exits 1 on a `run.json` or cases file it cannot trust, including a
-`run.json` written before per-scenario windows.
+scenario on stderr. Exits 1 on a missing or unreadable input, or a `run.json` or cases file it
+cannot trust, including a `run.json` written before per-scenario windows or one naming a
+scenario twice.
 
 ### `synthaea-ml-verify-onnx`
 

@@ -124,7 +124,7 @@ def test_a_case_under_a_scenario_that_reached_its_sidecar_technique_is_a_reachin
 def test_a_scenario_case_that_reached_only_part_of_a_combined_technique_did_not_reach_it(
     tmp_path: Path, scenario_dir: Path
 ) -> None:
-    """Exact string match, as `compute_passed`: `T1105` alone is not the sidecar's combined
+    """Techniques match as exact strings: `T1105` alone is not the sidecar's combined
     `T1105/T1059/T1071`."""
     got = _label(tmp_path, scenario_dir, [_case("c", 110, 2, "T1105")])["c"]
     assert got.label == lab.SCENARIO
@@ -218,6 +218,68 @@ def test_the_summary_counts_cases_and_reaching_cases_per_scenario(
     assert summary["by_scenario"] == {"dropper-chain": {"cases": 2, "reached_expected": 1}}
 
 
+# ── The window edges that decide a tree ─────────────────────────────────────────────────
+
+WINDOW = (10 * S, 20 * S)
+
+
+@pytest.mark.parametrize(
+    ("root_ts", "is_root"),
+    [(10 * S - 3, True), (10 * S - 4, False), (20 * S, True), (20 * S + 1, False)],
+    ids=["first ns of the lead", "before the lead", "last ns of the window", "after the window"],
+)
+def test_the_root_is_the_pid_first_seen_from_the_lead_through_the_window_end_inclusive(
+    root_ts: int, is_root: bool
+) -> None:
+    edges = {(RUNNER, 1): (1, 0, root_ts)}
+    got = descendants_in(edges, RUNNER, WINDOW, root_lead_ns=3)
+    assert ((RUNNER, 1) in got) is is_root
+
+
+@pytest.mark.parametrize(
+    ("child_ts", "is_descendant"),
+    [(10 * S, True), (10 * S - 1, False), (30 * S, True), (30 * S + 1, False)],
+    ids=["window start", "before the start", "descendant end", "after the descendant end"],
+)
+def test_a_descendant_is_first_seen_from_the_window_start_through_the_descendant_end_inclusive(
+    child_ts: int, is_descendant: bool
+) -> None:
+    edges = {(RUNNER, 1): (1, 0, 10 * S - 1), (101, 2): (RUNNER, 1, child_ts)}
+    got = descendants_in(edges, RUNNER, WINDOW, root_lead_ns=3, descendant_end_ns=30 * S)
+    assert ((101, 2) in got) is is_descendant
+
+
+# ── Runs the labeller labels but warns about ────────────────────────────────────────────
+
+
+def test_a_run_with_no_scenario_is_labelled_with_a_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    events = write_jsonl(tmp_path / "events.jsonl", EVENTS)
+    with caplog.at_level(logging.WARNING):
+        trees = lab.run_trees(events, lab.parse_run(_run(scenarios=[])))
+    assert trees.by_scenario == {}
+    assert "lists no scenario" in caplog.text
+
+
+def test_a_process_in_two_scenario_trees_is_logged_and_goes_to_the_first(
+    tmp_path: Path, scenario_dir: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Without generations a recycled pid can root two trees; the first scenario keeps it."""
+    first = {"name": "dropper-chain", "pid": 110, "start_ns": 11 * S, "end_ns": 20 * S}
+    later = {**first, "name": "later", "start_ns": 12 * S}
+    run = lab.parse_run(_run(scenarios=[{**first, "exit_code": 0}, {**later, "exit_code": 0}]))
+    events = write_jsonl(
+        tmp_path / "events.jsonl",
+        [{"type": "exec", "meta": {"pid": 110, "ppid": RUNNER, "timestamp_ns": 12 * S}}],
+    )
+    with caplog.at_level(logging.WARNING):
+        trees = lab.run_trees(events, run)
+    assert "dropper-chain and later share 1 process(es)" in caplog.text
+    got = lab.label_case(_case("c", 110, None), trees, {})
+    assert got.scenario == "dropper-chain"
+
+
 # ── run.json and cases.jsonl the labeller refuses ───────────────────────────────────────
 
 
@@ -243,8 +305,17 @@ def test_a_run_json_from_before_per_scenario_windows_is_refused_with_the_fix() -
             ]
         ),
         _run(scenarios=["x"]),
+        _run(scenarios=[_run()["scenarios"][0], {**_run()["scenarios"][0], "pid": 111}]),
     ],
-    ids=["bool pid", "string ts", "no name", "starts early", "ends late", "not an object"],
+    ids=[
+        "bool pid",
+        "string ts",
+        "no name",
+        "starts early",
+        "ends late",
+        "not an object",
+        "same name twice",
+    ],
 )
 def test_a_run_json_the_labeller_cannot_trust_is_refused(broken: dict) -> None:
     with pytest.raises(ValueError):
@@ -344,6 +415,29 @@ def test_the_command_line_fails_on_a_bad_run_json_without_a_traceback(
         )
     assert status == 1
     assert "re-run malicious-run.sh" in caplog.text
+    assert not (tmp_path / "labels.jsonl").exists()
+
+
+def test_the_command_line_fails_on_a_missing_input_without_a_traceback(
+    tmp_path: Path, scenario_dir: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.ERROR):
+        status = lab.main(
+            [
+                "--run-json",
+                str(tmp_path / "missing.json"),
+                "--events",
+                str(tmp_path / "events.jsonl"),
+                "--cases",
+                str(tmp_path / "cases.jsonl"),
+                "--scenario-dir",
+                str(scenario_dir),
+                "--output",
+                str(tmp_path / "labels.jsonl"),
+            ]
+        )
+    assert status == 1
+    assert "missing.json" in caplog.text
     assert not (tmp_path / "labels.jsonl").exists()
 
 

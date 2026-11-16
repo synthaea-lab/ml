@@ -13,8 +13,11 @@ scenario's process tree. This module decides that from three inputs of the same 
 Each case gets one of four labels:
 
 - `scenario`: its entity's parent process descends from one scenario's root. It carries that
-  scenario's name and, when the scenario has a sidecar, whether the case reached one of the
-  sidecar's expected techniques (exact string match, as `compute_passed` does);
+  scenario's name and, when the scenario has a sidecar, whether the case reached any of the
+  sidecar's expected techniques. Techniques match as exact strings, but the rule is any-of,
+  unlike the scenario replay's `compute_passed` (all of the expected `(technique, rule)` pairs,
+  with counts): a case is one entity's verdict, and a scenario's techniques are often spread
+  over several of its cases, so all-of per case would call most of them misses;
 - `harness`: the parent descends from the runner but from no scenario (the runner's own
   `sleep`, `date`, `python3`);
 - `unattributed`: the parent never appears in the capture, so its ancestry is unknown. A
@@ -107,8 +110,9 @@ def parse_run(doc: Any) -> RunRecord:
     """The `RunRecord` in a parsed `run.json`.
 
     Raises:
-        ValueError: If a field is missing or mistyped, or a scenario's window is outside the
-            run's: a run.json the labeller cannot trust labels nothing.
+        ValueError: If a field is missing or mistyped, a scenario's window is outside the
+            run's, or two scenarios share a name (each script runs once per run, and a label
+            names its scenario): a run.json the labeller cannot trust labels nothing.
     """
     if not isinstance(doc, dict):
         raise ValueError(f"run.json must be an object, got {type(doc).__name__}")
@@ -120,7 +124,7 @@ def parse_run(doc: Any) -> RunRecord:
             "run.json has no `scenarios` list: it predates per-scenario windows "
             "(scenarios#29); re-run malicious-run.sh"
         )
-    scenarios = []
+    scenarios: list[ScenarioRun] = []
     for index, entry in enumerate(entries):
         where = f"run.json scenarios[{index}]"
         if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
@@ -134,6 +138,8 @@ def parse_run(doc: Any) -> RunRecord:
         )
         if not start_ns <= scenario.start_ns <= scenario.end_ns <= end_ns:
             raise ValueError(f"{where}: window is not inside the run's")
+        if any(earlier.name == scenario.name for earlier in scenarios):
+            raise ValueError(f"{where}: scenario {scenario.name!r} is listed twice")
         scenarios.append(scenario)
     return RunRecord(
         root_pid=_int_field(doc, "root_pid", "run.json"),
@@ -170,21 +176,42 @@ def run_trees(events: Path, run: RunRecord) -> RunTrees:
     """Each scenario's process tree and the runner's, from the capture at `events`.
 
     A scenario's descendants are bounded by the run's end, not the scenario's: a child it left
-    running (a backgrounded beacon) is still its own.
+    running (a backgrounded beacon) is still its own. A capture without process generations
+    keys a process by its pid alone, so a recycled pid can join a tree; the 1 s root lead is
+    then the only guard, and a process in two trees is logged (its cases go to the first
+    scenario in run order).
     """
+    if not run.scenarios:
+        logger.warning("run.json lists no scenario: no case can be labelled `%s`", SCENARIO)
     edges = process_edges(events)
-    by_scenario: dict[str, set[ProcessKey]] = {}
-    for scenario in run.scenarios:
-        tree = descendants_in(
+    by_scenario = {
+        scenario.name: descendants_in(
             edges,
             scenario.pid,
             (scenario.start_ns, scenario.end_ns),
             root_lead_ns=SCENARIO_ROOT_LEAD_NS,
             descendant_end_ns=run.end_ns,
         )
-        by_scenario.setdefault(scenario.name, set()).update(tree)
+        for scenario in run.scenarios
+    }
+    _log_shared_processes(by_scenario)
     runner = descendants_in(edges, run.root_pid, (run.start_ns, run.end_ns))
     return RunTrees(by_scenario=by_scenario, runner=runner, seen=frozenset(edges))
+
+
+def _log_shared_processes(by_scenario: Mapping[str, set[ProcessKey]]) -> None:
+    names = list(by_scenario)
+    for index, first in enumerate(names):
+        for later in names[index + 1 :]:
+            shared = by_scenario[first] & by_scenario[later]
+            if shared:
+                logger.warning(
+                    "scenarios %s and %s share %d process(es); their cases go to %s",
+                    first,
+                    later,
+                    len(shared),
+                    first,
+                )
 
 
 def expected_techniques(scenario_dir: Path, names: Sequence[str]) -> dict[str, tuple[str, ...]]:
@@ -341,7 +368,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_cli_logging()
     try:
         run(args)
-    except ValueError as err:
+    except (ValueError, OSError) as err:
         logger.error("%s", err)
         return 1
     return 0
