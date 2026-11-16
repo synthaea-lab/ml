@@ -10,13 +10,17 @@ scenario's process tree. This module decides that from three inputs of the same 
 - the capture (`events.jsonl`) the cases were replayed from, for the process ancestry;
 - `cases.jsonl` from `agent replay`.
 
-Each case gets one of three labels:
+Each case gets one of four labels:
 
 - `scenario`: its entity's parent process descends from one scenario's root. It carries that
   scenario's name and, when the scenario has a sidecar, whether the case reached one of the
   sidecar's expected techniques (exact string match, as `compute_passed` does);
 - `harness`: the parent descends from the runner but from no scenario (the runner's own
   `sleep`, `date`, `python3`);
+- `unattributed`: the parent never appears in the capture, so its ancestry is unknown. A
+  subshell that only forks emits no event: on the first Debian campaign (2026-11-16) the `nc`
+  of `bind-shell` hung under such a parent. A window-based guess would also catch a cron job
+  whose daemon parent was silent, so these are left out rather than guessed;
 - `background`: anything else (the agent, SSH, cron).
 
 What it does not do: decide what a negative is for training. `background` cases are host
@@ -49,6 +53,7 @@ logger = logging.getLogger(__name__)
 
 SCENARIO = "scenario"
 HARNESS = "harness"
+UNATTRIBUTED = "unattributed"
 BACKGROUND = "background"
 
 # A scenario's root (the `timeout` it runs under) is forked after its recorded start, so it
@@ -153,10 +158,12 @@ def load_run(path: Path) -> RunRecord:
 
 @dataclass(frozen=True)
 class RunTrees:
-    """The process trees of a run: each scenario's, and the runner's whole tree."""
+    """The process trees of a run: each scenario's, the runner's whole tree, and every
+    process the capture saw at all."""
 
     by_scenario: dict[str, set[ProcessKey]]
     runner: set[ProcessKey]
+    seen: frozenset[ProcessKey]
 
 
 def run_trees(events: Path, run: RunRecord) -> RunTrees:
@@ -177,7 +184,7 @@ def run_trees(events: Path, run: RunRecord) -> RunTrees:
         )
         by_scenario.setdefault(scenario.name, set()).update(tree)
     runner = descendants_in(edges, run.root_pid, (run.start_ns, run.end_ns))
-    return RunTrees(by_scenario=by_scenario, runner=runner)
+    return RunTrees(by_scenario=by_scenario, runner=runner, seen=frozenset(edges))
 
 
 def expected_techniques(scenario_dir: Path, names: Sequence[str]) -> dict[str, tuple[str, ...]]:
@@ -244,9 +251,15 @@ def label_case(
                 expected_techniques=wanted,
                 reached_expected=None if wanted is None else bool(set(wanted) & set(techniques)),
             )
+    if parent in trees.runner:
+        label = HARNESS
+    elif parent not in trees.seen:
+        label = UNATTRIBUTED
+    else:
+        label = BACKGROUND
     return CaseLabel(
         case_id=case["case_id"],
-        label=HARNESS if parent in trees.runner else BACKGROUND,
+        label=label,
         scenario=None,
         techniques=techniques,
         expected_techniques=None,

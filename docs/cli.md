@@ -173,7 +173,8 @@ Labels each case of `agent replay`'s `--cases` file against the scenario run tha
 capture: `--run-json` is the `run.json` of `scenarios/ml-capture/malicious-run.sh` (with its
 per-scenario `scenarios` list, scenarios#29) and `--events` the capture the cases were replayed
 from, read for the process ancestry. Writes one JSON line per case to `--output`: `case_id`,
-`label` (`scenario`, `harness` for the runner's own processes, `background` for the host's),
+`label` (`scenario`, `harness` for the runner's own processes, `unattributed` when the case's
+parent never appears in the capture, `background` for the host's),
 `scenario`, `techniques`, and, for a scenario with a sidecar, `expected_techniques` and
 `reached_expected` (exact string match, as the scenario replay's `compute_passed`).
 `--scenario-dir` defaults to the `scenarios` sibling checkout. Logs a summary per label and per

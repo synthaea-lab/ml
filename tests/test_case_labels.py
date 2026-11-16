@@ -102,8 +102,10 @@ def scenario_dir(tmp_path: Path) -> Path:
     return directory
 
 
-def _label(tmp_path: Path, scenario_dir: Path, cases: list[dict]) -> dict[str, lab.CaseLabel]:
-    events = write_jsonl(tmp_path / "events.jsonl", EVENTS)
+def _label(
+    tmp_path: Path, scenario_dir: Path, cases: list[dict], events_rows: list[dict] | None = None
+) -> dict[str, lab.CaseLabel]:
+    events = write_jsonl(tmp_path / "events.jsonl", EVENTS if events_rows is None else events_rows)
     cases_path = write_jsonl(tmp_path / "cases.jsonl", cases)
     labels = lab.label_cases(lab.parse_run(_run()), events, cases_path, scenario_dir)
     return {label.case_id: label for label in labels}
@@ -165,9 +167,24 @@ def test_a_recycled_pid_of_a_scenario_process_is_not_the_scenarios(
     tmp_path: Path, scenario_dir: Path
 ) -> None:
     """Same pid as the dropper-chain's child, another generation: another process."""
-    got = _label(tmp_path, scenario_dir, [_case("c", 111, 99, "T1105/T1059/T1071")])["c"]
+    recycled = _event(111, 1, 60 * S, 99, 0)
+    got = _label(
+        tmp_path, scenario_dir, [_case("c", 111, 99, "T1105/T1059/T1071")], [*EVENTS, recycled]
+    )["c"]
     assert got.label == lab.BACKGROUND
     assert got.reached_expected is None
+
+
+def test_a_case_whose_parent_never_appears_in_the_capture_is_unattributed_not_background(
+    tmp_path: Path, scenario_dir: Path
+) -> None:
+    """First Debian campaign (2026-11-16): `bind-shell` runs `nc` from a subshell that only
+    forks, so the subshell emits no event and `nc`'s case hung under a parent the capture
+    never saw. It was labelled `background`, a scenario's attack counted as host activity."""
+    nc = _event(141, 140, 13 * S, 10, 9)  # the subshell 140 (generation 9) is silent
+    got = _label(tmp_path, scenario_dir, [_case("nc", 140, 9, "T1059/T1071")], [*EVENTS, nc])
+    assert got["nc"].label == lab.UNATTRIBUTED
+    assert got["nc"].scenario is None
 
 
 def test_a_scenario_root_exec_d_long_before_its_recorded_start_is_not_its_root(
