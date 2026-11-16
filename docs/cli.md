@@ -19,6 +19,7 @@ that `verify_onnx` scans, resolve from there.
 | [`synthaea-ml-calibrate-llr`](#synthaea-ml-calibrate-llr) | `calibration.calibrate_llr` | Empirical likelihood ratios for the correlator |
 | [`synthaea-ml-robustness`](#synthaea-ml-robustness) | `evaluation.robustness_cli` | Gate and report on robustness cards |
 | [`synthaea-ml-t1-lineage-gain`](#synthaea-ml-t1-lineage-gain) | `evaluation.t1_lineage_gain` | Measure what lineage features add to T1 |
+| [`synthaea-ml-label-cases`](#synthaea-ml-label-cases) | `cases.label` | Label replayed cases by the scenario that produced them (T2) |
 | [`synthaea-ml-verify-onnx`](#synthaea-ml-verify-onnx) | `export.verify_onnx` | Runtime and provenance check of registry models |
 
 All of them exit 2 on a usage error (argparse). Progress and warnings go to stderr; a command's
@@ -160,6 +161,24 @@ synthaea-ml-t1-lineage-gain --benign-dataset DIR [DIR ...] --malicious-capture P
 
 Writes the JSON report to `--output` and prints the AUC and detection summary. See
 [evaluation.md](evaluation.md#lineage-gain).
+
+### `synthaea-ml-label-cases`
+
+```text
+synthaea-ml-label-cases --run-json PATH --events PATH --cases PATH
+    [--scenario-dir DIR] --output PATH
+```
+
+Labels each case of `agent replay`'s `--cases` file against the scenario run that produced the
+capture: `--run-json` is the `run.json` of `scenarios/ml-capture/malicious-run.sh` (with its
+per-scenario `scenarios` list, scenarios#29) and `--events` the capture the cases were replayed
+from, read for the process ancestry. Writes one JSON line per case to `--output`: `case_id`,
+`label` (`scenario`, `harness` for the runner's own processes, `background` for the host's),
+`scenario`, `techniques`, and, for a scenario with a sidecar, `expected_techniques` and
+`reached_expected` (exact string match, as the scenario replay's `compute_passed`).
+`--scenario-dir` defaults to the `scenarios` sibling checkout. Logs a summary per label and per
+scenario on stderr. Exits 1 on a `run.json` or cases file it cannot trust, including a
+`run.json` written before per-scenario windows.
 
 ### `synthaea-ml-verify-onnx`
 
