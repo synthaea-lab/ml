@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeVar
 
+from synthaea_ml.lf_text import write_lf_text
 from synthaea_ml.registry.layout import MODEL_RECORD_FILENAME
 from synthaea_ml.registry.records import (
     SCHEMA_VERSION,
@@ -182,12 +183,9 @@ def write_training_record(
 
 def save_training_record(model_dir: Path, record: TrainingRecord) -> None:
     """Write ``record`` as ``model_dir/model_record.json``, replacing any earlier one."""
-    # The release gate hashes these bytes, so they must not depend on the OS that wrote
-    # them: text mode alone would write CRLF on Windows (#8).
-    (model_dir / MODEL_RECORD_FILENAME).write_text(
+    write_lf_text(
+        model_dir / MODEL_RECORD_FILENAME,
         json.dumps(record_to_dict(record), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-        newline="\n",
     )
 
 
