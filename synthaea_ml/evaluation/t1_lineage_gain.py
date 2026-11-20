@@ -56,9 +56,9 @@ from synthaea_ml.data.behavior_dataset import (
     records_from_events,
 )
 from synthaea_ml.data.manifest import BEHAVIOR_CAPTURE_FILENAME
+from synthaea_ml.data.process_tree import descendants_of
 from synthaea_ml.features import correlation, lineage, t1
 from synthaea_ml.training.config import BEHAVIOR_FOREST, BEHAVIOR_MIN_SAMPLES, CALIBRATION
-from synthaea_ml.units import NS_PER_SECOND
 
 logger = logging.getLogger(__name__)
 
@@ -199,64 +199,6 @@ def measure_gain(benign: np.ndarray, malicious: np.ndarray, seeds: int = 20) -> 
         detection_gain_std=float(detection_gain.std()),
         seeds_where_lineage_is_not_worse=int(np.sum(auc_gain >= 0)),
     )
-
-
-def _process_edges(path: Path) -> dict[tuple[int, int | None], tuple[int, int | None, int]]:
-    """`(pid, generation) -> (ppid, parent_generation, first_ts_ns)` from every wire event.
-
-    Every event carries its identity and its parent's in `meta`, so a process that forked
-    and never exec'd (a subshell) still links its children to the runner.
-    """
-    edges: dict[tuple[int, int | None], tuple[int, int | None, int]] = {}
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        try:
-            meta = json.loads(line).get("meta")
-        except (json.JSONDecodeError, AttributeError):
-            continue
-        if not isinstance(meta, dict) or "pid" not in meta or "ppid" not in meta:
-            continue
-        key = (meta["pid"], meta.get("process_generation"))
-        ts = meta.get("timestamp_ns", 0)
-        if key not in edges or ts < edges[key][2]:
-            edges[key] = (meta["ppid"], meta.get("parent_process_generation"), ts)
-    return edges
-
-
-# The runner records its start time once it is running, so its own exec precedes the window:
-# the root may have been first seen this long before `start_ns`.
-ROOT_LEAD_NS = 30 * NS_PER_SECOND
-
-
-def descendants_of(
-    path: Path,
-    root_pid: int,
-    start_ns: int,
-    end_ns: int,
-    root_lead_ns: int = ROOT_LEAD_NS,
-) -> set[tuple[int, int | None]]:
-    """The `(pid, generation)` of `root_pid`'s process tree seen inside `[start_ns, end_ns]`.
-
-    The root is the incarnation of `root_pid` first seen in `[start_ns - root_lead_ns, end_ns]`
-    (the runner's exec precedes the start time it records; an earlier life of a recycled pid is
-    another process); a descendant is a process first seen inside the window whose parent
-    incarnation is already in the set.
-    """
-    edges = _process_edges(path)
-    members: set[tuple[int, int | None]] = {
-        key
-        for key, (_, _, ts) in edges.items()
-        if key[0] == root_pid and start_ns - root_lead_ns <= ts <= end_ns
-    }
-    changed = True
-    while changed:
-        changed = False
-        for key, (ppid, parent_generation, ts) in edges.items():
-            if key in members or not start_ns <= ts <= end_ns:
-                continue
-            if (ppid, parent_generation) in members:
-                members.add(key)
-                changed = True
-    return members
 
 
 def malicious_matrix(

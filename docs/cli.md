@@ -20,6 +20,7 @@ that `verify_onnx` scans, resolve from there.
 | [`synthaea-ml-record-replay`](#synthaea-ml-record-replay) | `evaluation.record_replay` | Record a scenario run in a model record |
 | [`synthaea-ml-robustness`](#synthaea-ml-robustness) | `evaluation.robustness_cli` | Gate and report on robustness cards |
 | [`synthaea-ml-t1-lineage-gain`](#synthaea-ml-t1-lineage-gain) | `evaluation.t1_lineage_gain` | Measure what lineage features add to T1 |
+| [`synthaea-ml-label-cases`](#synthaea-ml-label-cases) | `cases.label` | Label replayed cases by the scenario that produced them (T2) |
 | [`synthaea-ml-verify-onnx`](#synthaea-ml-verify-onnx) | `export.verify_onnx` | Runtime and provenance check of registry models |
 
 All of them exit 2 on a usage error (argparse). Progress and warnings go to stderr; a command's
@@ -176,6 +177,31 @@ synthaea-ml-t1-lineage-gain --benign-dataset DIR [DIR ...] --malicious-capture P
 
 Writes the JSON report to `--output` and prints the AUC and detection summary. See
 [evaluation.md](evaluation.md#lineage-gain).
+
+### `synthaea-ml-label-cases`
+
+```text
+synthaea-ml-label-cases --run-json PATH --events PATH --cases PATH
+    [--scenario-dir DIR] --output PATH
+```
+
+Labels each case of `agent replay`'s `--cases` file against the scenario run that produced the
+capture: `--run-json` is the `run.json` of `scenarios/ml-capture/malicious-run.sh` (with its
+per-scenario `scenarios` list, scenarios#29) and `--events` the capture the cases were replayed
+from, read for the process ancestry. Writes one JSON line per case to `--output`: `case_id`,
+`label` (`scenario`, `harness` for the runner's own processes, `unattributed` when the case's
+parent never appears in the capture, `background` for the host's),
+`scenario`, `techniques`, and, for a scenario with a sidecar, `expected_techniques` and
+`reached_expected`: whether the case reached any of the sidecar's techniques, matched as exact
+strings. This is any-of per case, not the scenario replay's `compute_passed` (all expected
+`(technique, rule)` pairs with counts), since a scenario's techniques are spread over its cases.
+`--scenario-dir` defaults to the `scenarios` sibling checkout; every scenario of the run outside
+`odd-parents/` must have its sidecar there. `label` is the training target; `reached_expected`
+is a coverage diagnostic computed from the case's own `techniques`, not a target. Logs a summary
+per label and per scenario on stderr. Exits 1 on a missing or unreadable input, or a `run.json`,
+cases file or sidecar it cannot trust: a `run.json` written before per-scenario windows or
+naming a scenario twice, a scenario with no sidecar (a wrong `--scenario-dir`), a malformed
+sidecar, or one whose `name:` is not its file stem.
 
 ### `synthaea-ml-verify-onnx`
 

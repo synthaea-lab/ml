@@ -21,7 +21,7 @@ SYNTHAEA_REQUIRE_SIBLINGS=1 pytest tests   # as CI runs it
 | Training | `test_trainers`, `test_train_behavior`, `test_train_correlation`, `test_train_site_model`, `test_training_pipeline`, `test_training_config`, `test_training_floor`, `test_trainer_artifacts` |
 | Site rarity floors | `test_rarity_floor`, `test_rarity_global_floor`, `test_site_rarity_messages`, `test_site_rarity_record` |
 | Calibration | `test_calibrate_conformal` |
-| Evaluation | `test_scenario_replay`, `test_robustness`, `test_robustness_snapshot`, `test_robustness_cli`, `test_mutations_cmdline`, `test_mutations_lineage`, `test_mutations_prng`, `test_t1_lineage_gain`, `test_odd_parent_scenarios` |
+| Evaluation | `test_scenario_replay`, `test_robustness`, `test_robustness_snapshot`, `test_robustness_cli`, `test_mutations_cmdline`, `test_mutations_lineage`, `test_mutations_prng`, `test_t1_lineage_gain`, `test_odd_parent_scenarios`, `test_case_labels` |
 | Registry | `test_training_record`, `test_training_record_golden`, `test_record_codec`, `test_verify_onnx`, `test_verify_provenance` |
 | Structure | `test_import_direction`, `test_cli_entry_points`, `test_cli_logging` |
 

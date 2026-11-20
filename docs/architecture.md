@@ -36,11 +36,12 @@ it, not the fleet service itself.
 
 | Subpackage | Responsibility |
 | --- | --- |
-| [`data/`](../synthaea_ml/data) | Reading agent captures and baselines ([`jsonl`](../synthaea_ml/data/jsonl.py), [`wire`](../synthaea_ml/data/wire.py), [`canonical`](../synthaea_ml/data/canonical.py)), building datasets ([`capture_to_baseline`](../synthaea_ml/data/capture_to_baseline.py), [`aggregate_correlation`](../synthaea_ml/data/aggregate_correlation.py), [`behavior_dataset`](../synthaea_ml/data/behavior_dataset.py), [`common_set`](../synthaea_ml/data/common_set.py)) and the dataset [`manifest`](../synthaea_ml/data/manifest.py) |
+| [`data/`](../synthaea_ml/data) | Reading agent captures and baselines ([`jsonl`](../synthaea_ml/data/jsonl.py), [`wire`](../synthaea_ml/data/wire.py), [`canonical`](../synthaea_ml/data/canonical.py)), building datasets ([`capture_to_baseline`](../synthaea_ml/data/capture_to_baseline.py), [`aggregate_correlation`](../synthaea_ml/data/aggregate_correlation.py), [`behavior_dataset`](../synthaea_ml/data/behavior_dataset.py), [`common_set`](../synthaea_ml/data/common_set.py)), the dataset [`manifest`](../synthaea_ml/data/manifest.py), and the [process trees](../synthaea_ml/data/process_tree.py) a capture's ancestry rebuilds |
 | [`features/`](../synthaea_ml/features) | Feature extractors, each the reference for a Rust twin in the agent |
 | [`calibration/`](../synthaea_ml/calibration) | Conformal thresholds and feature bounds ([`calibrate_conformal`](../synthaea_ml/calibration/calibrate_conformal.py)); empirical likelihood ratios ([`calibrate_llr`](../synthaea_ml/calibration/calibrate_llr.py)) |
 | [`training/`](../synthaea_ml/training) | The shared [configuration](../synthaea_ml/training/config.py) and [pipeline steps](../synthaea_ml/training/pipeline.py), and one entry point per trainer |
 | [`evaluation/`](../synthaea_ml/evaluation) | [Scenario replay](../synthaea_ml/evaluation/scenario_replay.py), [robustness](../synthaea_ml/evaluation/robustness.py) with its [mutators](../synthaea_ml/evaluation/mutations) and [gate](../synthaea_ml/evaluation/robustness_cli.py), the [lineage-gain measurement](../synthaea_ml/evaluation/t1_lineage_gain.py), and an [ONNX model adapter](../synthaea_ml/evaluation/onnx_model.py) |
+| [`cases/`](../synthaea_ml/cases) | The [case labeller](../synthaea_ml/cases/label.py) for the T2 scorer (ml#3): which scenario, if any, produced each case `agent replay` wrote |
 | [`registry/`](../synthaea_ml/registry) | The version directory [layout](../synthaea_ml/registry/layout.py), the record [types](../synthaea_ml/registry/records.py), its [codec](../synthaea_ml/registry/codec.py), [dataset binding](../synthaea_ml/registry/dataset_binding.py) and [provenance checks](../synthaea_ml/registry/provenance.py) |
 | [`export/`](../synthaea_ml/export) | [`verify_onnx`](../synthaea_ml/export/verify_onnx.py), the runtime and provenance check of registry models |
 | Top level | [`hashing`](../synthaea_ml/hashing.py) (the one SHA-256 helper), [`siblings`](../synthaea_ml/siblings.py) (where the sibling checkouts are), [`cli_logging`](../synthaea_ml/cli_logging.py) |
@@ -59,6 +60,7 @@ flowchart BT
   calibration["calibration"] --> registry & data & features
   evaluation["evaluation"] --> calibration & registry & data & features
   evaluation -.->|config only| config["training.config"]
+  cases["cases"] --> evaluation & data & base
   training["training (entry points)"] --> evaluation & calibration & registry & data & features
   export["export"] --> registry & features & base
 ```
