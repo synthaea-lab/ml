@@ -375,7 +375,7 @@ def parse_args(argv: Sequence[str] | None = None) -> LabelArgs:
     parser.add_argument(
         "--scenario-dir",
         type=Path,
-        default=siblings.path("scenarios", "scenarios"),
+        default=siblings.scenario_sidecars(),
         help="the scenario sidecars (default: the scenarios sibling checkout)",
     )
     parser.add_argument("--output", type=Path, required=True)
