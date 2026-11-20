@@ -126,9 +126,7 @@ def test_a_run_in_another_environment_is_kept_beside_the_first(tmp_path: Path) -
     model_dir = _model_dir(tmp_path)
     on_debian = record_replay(_args(tmp_path, model_dir, _alerts(tmp_path, 1)))
 
-    on_fedora = record_replay(
-        _args(tmp_path, model_dir, _alerts(tmp_path, 1), environment=_FEDORA)
-    )
+    on_fedora = record_replay(_args(tmp_path, model_dir, _alerts(tmp_path, 1), environment=_FEDORA))
 
     assert load_training_record(model_dir).scenario_replays == [on_debian, on_fedora]
 
@@ -191,10 +189,16 @@ def test_the_environment_of_a_remote_run_is_taken_from_the_command_line(
 ) -> None:
     args = parse_args(
         [
-            "--model-dir", str(tmp_path),
-            "--scenario", "beacon",
-            "--alerts", "a.ndjson",
-            "--environment", "linux", "6.1.0-26-amd64", "x86_64",
+            "--model-dir",
+            str(tmp_path),
+            "--scenario",
+            "beacon",
+            "--alerts",
+            "a.ndjson",
+            "--environment",
+            "linux",
+            "6.1.0-26-amd64",
+            "x86_64",
         ]
     )
 

@@ -433,9 +433,7 @@ class _Fields:
         """The nested block at ``key``, or ``None`` when absent."""
         return self.block(key, decode) if key in self._values else None
 
-    def blocks(
-        self, key: str, decode: _Decoder[_Block], *, optional: bool = False
-    ) -> list[_Block]:
+    def blocks(self, key: str, decode: _Decoder[_Block], *, optional: bool = False) -> list[_Block]:
         """The array of nested blocks at ``key``; an optional array may be absent (empty)."""
         return [
             decode(item, f"{self._where}.{key}[{index}]")
@@ -464,7 +462,6 @@ class _Fields:
         return RecordFormatError(
             f"{self._where}.{key}: expected {expected}, got {_json_type(value)}"
         )
-
 
 
 def _json_type(value: object) -> str:
