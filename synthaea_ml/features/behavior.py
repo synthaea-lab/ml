@@ -136,7 +136,9 @@ def extract_behavior_features(events: list[dict[str, Any]]) -> list[float]:
 
     exec_events = [e for e in events if e["type"] == "exec"]
     connect_events = [e for e in events if e["type"] == "connect"]
-    write_events = [e for e in events if e["type"] == "fileopen" and has_write_intent(e.get("flags", 0))]
+    write_events = [
+        e for e in events if e["type"] == "fileopen" and has_write_intent(e.get("flags", 0))
+    ]
 
     has_exec = 1.0 if exec_events else 0.0
     has_connect = 1.0 if connect_events else 0.0

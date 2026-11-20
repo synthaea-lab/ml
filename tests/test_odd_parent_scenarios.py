@@ -51,7 +51,9 @@ def test_a_scenario_odd_by_comm_runs_from_a_neutral_directory(script: Path) -> N
         pytest.skip("odd by path")
     code = "\n".join(code_lines(text))
     used = [p for p in UNIX_SUSPICIOUS if p in code]
-    assert not used, f"{script.name} is odd by comm but runs from {used}: path and comm are confounded"
+    assert not used, (
+        f"{script.name} is odd by comm but runs from {used}: path and comm are confounded"
+    )
     assert "$HOME" in code, f"{script.name} should work under the user's own directory"
 
 
@@ -61,7 +63,9 @@ def test_a_scenario_odd_by_path_really_runs_from_a_suspicious_directory(script: 
     if declared_kind(text) != "path":
         pytest.skip("odd by comm")
     code = "\n".join(code_lines(text))
-    assert any(p in code for p in UNIX_SUSPICIOUS), f"{script.name} claims a suspicious path but uses none"
+    assert any(p in code for p in UNIX_SUSPICIOUS), (
+        f"{script.name} claims a suspicious path but uses none"
+    )
 
 
 def test_a_scenario_odd_by_path_does_not_borrow_a_name_the_comm_features_know() -> None:

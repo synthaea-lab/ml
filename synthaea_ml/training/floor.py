@@ -36,10 +36,7 @@ class CardComparison:
     @property
     def escape_rate_regressed(self) -> bool:
         """Whether the candidate's escape rate is above the reference's plus the tolerance."""
-        return (
-            self.candidate.escape_rate
-            > self.reference.escape_rate + FLOOR_TOLERANCE.escape_rate
-        )
+        return self.candidate.escape_rate > self.reference.escape_rate + FLOOR_TOLERANCE.escape_rate
 
     @property
     def median_degradation_regressed(self) -> bool:

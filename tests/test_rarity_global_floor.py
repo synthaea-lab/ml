@@ -32,7 +32,6 @@ ONNX_OPSET = {"": 18, "ai.onnx.ml": 3}
 WITHHELD = ("--withhold-fraction", "0.3")
 
 
-
 def _export(directory: Path, model: IsolationForest, threshold: float | None) -> Path:
     """What `train_linux` writes: `model.onnx`, and `model_metadata.json` when there is a threshold."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -60,7 +59,9 @@ def test_the_loaded_model_scores_like_the_estimator_it_was_exported_from(
     x = cmdline_rows(40, seed=5)
 
     assert np.allclose(loaded.decision_function(x), global_forest.decision_function(x), atol=1e-5)
-    assert np.allclose(loaded.decision_function(x.tolist()), global_forest.decision_function(x), atol=1e-5)
+    assert np.allclose(
+        loaded.decision_function(x.tolist()), global_forest.decision_function(x), atol=1e-5
+    )
     assert loaded.threshold == pytest.approx(-0.07)
     assert loaded.threshold_source == "model_metadata.json"
     assert loaded.n_features_in_ == 9
@@ -92,11 +93,15 @@ def test_metadata_without_a_threshold_is_refused_rather_than_read_as_zero(
 
 
 def test_a_model_of_another_width_is_refused_on_scoring(tmp_path: Path) -> None:
-    wide = IsolationForest(n_estimators=10, random_state=1).fit(np.zeros((50, 11), dtype=np.float32) + 1)
+    wide = IsolationForest(n_estimators=10, random_state=1).fit(
+        np.zeros((50, 11), dtype=np.float32) + 1
+    )
     directory = tmp_path / "wide"
     directory.mkdir()
     (directory / "model.onnx").write_bytes(
-        to_onnx(wide, np.zeros((1, 11), dtype=np.float32), target_opset=ONNX_OPSET).SerializeToString()
+        to_onnx(
+            wide, np.zeros((1, 11), dtype=np.float32), target_opset=ONNX_OPSET
+        ).SerializeToString()
     )
 
     loaded = load_shipped_model(directory)
@@ -118,7 +123,9 @@ def _candidate(withheld_fraction: float):
     x_rare = np.hstack([x_base, rarity_cols])
     forest = IsolationForest(n_estimators=100, random_state=42).fit(x_rare[:1400])
     cal = calibrate_threshold(
-        forest, x_rare[1400:1700], fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
+        forest,
+        x_rare[1400:1700],
+        fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
         benign_rate_per_day=CALIBRATION.benign_rate_per_day,
     )
     return forest, cal, x_base[1700:]
@@ -127,7 +134,9 @@ def _candidate(withheld_fraction: float):
 def _global(tmp_path: Path, forest: IsolationForest, x_cal: np.ndarray):
     """The global model as shipped, its threshold calibrated on `x_cal` as `train_linux` does."""
     cal = calibrate_threshold(
-        forest, x_cal, fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
+        forest,
+        x_cal,
+        fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
         benign_rate_per_day=CALIBRATION.benign_rate_per_day,
     )
     return load_shipped_model(_export(tmp_path / "g", forest, cal.threshold))
@@ -190,8 +199,11 @@ def test_the_scenarios_compare_the_candidate_with_the_global_model_at_each_model
     ],
 )
 def test_the_tolerances_are_the_inclusive_ones_of_the_other_floors(
-    robustness_stub: RobustnessStub, tmp_path: Path, global_forest: IsolationForest,
-    candidate: object, passes: bool,
+    robustness_stub: RobustnessStub,
+    tmp_path: Path,
+    global_forest: IsolationForest,
+    candidate: object,
+    passes: bool,
 ) -> None:
     cand, cand_cal, x_test = _candidate(withheld_fraction=0.5)
     reference = _global(tmp_path, global_forest, cmdline_rows(300, seed=12))
@@ -251,7 +263,9 @@ def test_the_run_records_the_global_comparison_and_no_longer_says_not_checked(
 
 
 def test_the_record_says_which_scenarios_were_compared_with_the_global_model(
-    tmp_path: Path, global_forest: IsolationForest, robustness_stub: RobustnessStub,
+    tmp_path: Path,
+    global_forest: IsolationForest,
+    robustness_stub: RobustnessStub,
     site_rarity_run: SiteRarityRun,
 ) -> None:
     from synthaea_ml.registry.training_record import load_training_record
@@ -282,13 +296,21 @@ def test_without_a_global_model_the_record_still_says_it_was_not_checked(
 
 
 def test_a_failing_global_floor_stops_the_run_before_any_model_is_written(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, global_forest: IsolationForest,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    global_forest: IsolationForest,
     site_rarity_run: SiteRarityRun,
 ) -> None:
     failing = rare.FloorResult(
-        reference_name="global model", fp_reference=0.0, fp_withheld=0.9, scenario_lines=[],
-        failures=["with the rarity withheld the candidate flags 90.00% against the global model's 0.00%"],
-        threshold=0.0, threshold_source="model_metadata.json",
+        reference_name="global model",
+        fp_reference=0.0,
+        fp_withheld=0.9,
+        scenario_lines=[],
+        failures=[
+            "with the rarity withheld the candidate flags 90.00% against the global model's 0.00%"
+        ],
+        threshold=0.0,
+        threshold_source="model_metadata.json",
     )
     monkeypatch.setattr(rare, "check_global_floor", lambda *a, **k: failing)
     directory = _export(tmp_path / "global", global_forest, threshold=0.0)

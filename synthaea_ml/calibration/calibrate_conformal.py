@@ -113,8 +113,7 @@ def compute_feature_bounds(
     """
     if X.shape[1] != len(feature_names):
         raise ValueError(
-            f"feature_names length ({len(feature_names)}) must match "
-            f"X columns ({X.shape[1]})"
+            f"feature_names length ({len(feature_names)}) must match X columns ({X.shape[1]})"
         )
 
     mins = X.min(axis=0)

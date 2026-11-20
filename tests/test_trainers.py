@@ -104,7 +104,11 @@ def test_train_linux_end_to_end(tmp_path: Path) -> None:
     assert record.training_script == "synthaea_ml/training/train_linux.py"
     assert len(record.dataset_versions) == 1
     assert record.dataset_versions[0].sample_count == len(_LINUX_SAMPLES)
-    assert record.hyperparameters == {"n_estimators": 100, "contamination": 0.05, "random_state": 42}
+    assert record.hyperparameters == {
+        "n_estimators": 100,
+        "contamination": 0.05,
+        "random_state": 42,
+    }
 
 
 def test_train_linux_rejects_mutated_baseline(tmp_path: Path) -> None:
@@ -144,9 +148,7 @@ def test_train_linux_two_datasets_shows_both_versions(tmp_path: Path) -> None:
 
 def test_train_windows_end_to_end(tmp_path: Path) -> None:
     dataset = tmp_path / "windows__desktop-user__abc__2026-09-11"
-    _write_baseline_dir(
-        dataset, _WINDOWS_SAMPLES, platform="windows", workload="desktop-user"
-    )
+    _write_baseline_dir(dataset, _WINDOWS_SAMPLES, platform="windows", workload="desktop-user")
     output = tmp_path / "model_out"
 
     _run_trainer(train_windows, dataset=[dataset], output_dir=output)
@@ -158,14 +160,16 @@ def test_train_windows_end_to_end(tmp_path: Path) -> None:
     assert record.dataset_versions[0].sample_count == len(_WINDOWS_SAMPLES)
     # Windows-side name derivation must survive a hyphenated workload label.
     assert "__desktop-user__" in record.dataset_versions[0].name
-    assert record.hyperparameters == {"n_estimators": 100, "contamination": 0.05, "random_state": 42}
+    assert record.hyperparameters == {
+        "n_estimators": 100,
+        "contamination": 0.05,
+        "random_state": 42,
+    }
 
 
 def test_train_windows_rejects_mutated_baseline(tmp_path: Path) -> None:
     dataset = tmp_path / "windows__desktop-user__abc__2026-09-11"
-    _write_baseline_dir(
-        dataset, _WINDOWS_SAMPLES, platform="windows", workload="desktop-user"
-    )
+    _write_baseline_dir(dataset, _WINDOWS_SAMPLES, platform="windows", workload="desktop-user")
     with (dataset / "baseline.jsonl").open("a", encoding="utf-8") as f:
         f.write('{"cmdline": "C:\\\\Windows\\\\mutated.exe"}\n')
     output = tmp_path / "model_out"

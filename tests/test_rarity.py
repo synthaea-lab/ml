@@ -75,7 +75,13 @@ def test_an_event_never_sees_hosts_that_ran_the_image_after_it() -> None:
 
 
 def test_the_snapshot_changes_only_at_a_boundary_not_with_every_event() -> None:
-    recs = [record("a1", 0), record("a2", 0.1), record("a3", 0.2), record("a4", 1.1), record("a5", 1.2)]
+    recs = [
+        record("a1", 0),
+        record("a2", 0.1),
+        record("a3", 0.2),
+        record("a4", 1.1),
+        record("a5", 1.2),
+    ]
     snaps = point_in_time_snapshots(recs, k=3)
     assert snaps[3] == snaps[4], "two events inside one interval share one snapshot"
     assert snaps[3] is not None and H1 in snaps[3].common
@@ -154,7 +160,11 @@ def test_the_site_rarity_run_trains_both_models_and_records_the_effect(tmp_path)
 
     record = load_training_record(out)
     assert record.dataset_versions[0].name == "site-corpus-acme"
-    assert record.hyperparameters == {"n_estimators": 100, "contamination": 0.05, "random_state": 42}
+    assert record.hyperparameters == {
+        "n_estimators": 100,
+        "contamination": 0.05,
+        "random_state": 42,
+    }
     extra = record.extra
     assert 0.0 < float(extra["rarity_known_fraction"]) <= 1.0
     for key in ("fp_rate_test_cmdline_only", "fp_rate_test_with_rarity"):

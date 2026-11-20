@@ -305,8 +305,13 @@ def test_a_real_agent_capture_carries_lineage_and_incarnation_into_the_t1_tier(
             ),
             {
                 "type": "connect",
-                "meta": {"pid": 7, "ppid": 1, "timestamp_ns": 2_000_000_000, "comm": "sh",
-                         "process_generation": 1},
+                "meta": {
+                    "pid": 7,
+                    "ppid": 1,
+                    "timestamp_ns": 2_000_000_000,
+                    "comm": "sh",
+                    "process_generation": 1,
+                },
                 "daddr": "10.0.0.1",
                 "dport": 4444,
             },
@@ -357,7 +362,7 @@ def test_load_events_from_source(tmp_path: Path) -> None:
         '{"type":"exec","argv":["curl","https://example.com"]}\n'
         '{"type":"file_open","path":"/tmp/test"}\n'  # Not an exec, should be filtered
         '{"argv":["ls","-la"]}\n'  # Baseline format
-        '\n',  # Blank line, should be skipped
+        "\n",  # Blank line, should be skipped
         encoding="utf-8",
     )
 

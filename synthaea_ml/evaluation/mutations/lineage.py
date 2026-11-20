@@ -23,9 +23,7 @@ def _platform_of(record: dict[str, Any]) -> str | None:
     matching pool so a Linux event is never given `explorer.exe` as a parent: that
     makes the transition *rarer*, which is not a realistic evasion (#617).
     """
-    hints = [
-        record.get(k) for k in ("image_path", "parent_image_path", "comm", "parent_comm")
-    ]
+    hints = [record.get(k) for k in ("image_path", "parent_image_path", "comm", "parent_comm")]
     argv = record.get("argv")
     if argv:
         hints.append(str(argv[0]))

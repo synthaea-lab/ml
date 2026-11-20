@@ -186,9 +186,7 @@ def load_malicious_pids(path: Path) -> set[int]:
 # ── Sliding windowing ──────────────────────────────────────────────────────────
 
 
-def group_by_pid_and_window(
-    events: list[dict], window_ns: int
-) -> dict[int, list[list[float]]]:
+def group_by_pid_and_window(events: list[dict], window_ns: int) -> dict[int, list[list[float]]]:
     """Group events by PID, slice into windows of window_ns nanoseconds, and
     return the BehaviorVectors per PID (one vector per non-empty window)."""
     by_pid: dict[int, list[dict]] = defaultdict(list)

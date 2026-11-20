@@ -67,9 +67,7 @@ def extract_combined_features(
 
     # Extract lineage features (6) - needs most recent exec event for this incarnation
     pid_execs = [
-        e
-        for e in correlation.events_for_pid(events, pid, generation)
-        if e.get("type") == "exec"
+        e for e in correlation.events_for_pid(events, pid, generation) if e.get("type") == "exec"
     ]
     exec_event: Mapping[str, Any]
     if pid_execs:

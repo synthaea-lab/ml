@@ -81,7 +81,9 @@ def test_missing_baseline_raises(tmp_path: Path, platform: str) -> None:
 
 
 def _info_messages(caplog: pytest.LogCaptureFixture, logger: str) -> list[str]:
-    return [r.getMessage() for r in caplog.records if r.name == logger and r.levelno == logging.INFO]
+    return [
+        r.getMessage() for r in caplog.records if r.name == logger and r.levelno == logging.INFO
+    ]
 
 
 def test_linux_trainer_dedupes_its_baseline_and_logs_the_counts(

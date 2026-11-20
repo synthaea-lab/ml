@@ -177,7 +177,9 @@ def _mutation_results(
         for mutator in mutators:
             for intensity in _INTENSITIES:
                 try:
-                    mutated_score = _score_record(model, mutator.mutate(event, intensity, rng), tier)
+                    mutated_score = _score_record(
+                        model, mutator.mutate(event, intensity, rng), tier
+                    )
                 except ValueError:
                     continue
                 results.append(

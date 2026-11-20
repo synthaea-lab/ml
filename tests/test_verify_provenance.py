@@ -45,9 +45,7 @@ def _make_baseline(dir_path: Path, *, name: str, samples: int = 3) -> Path:
     return write_baseline_dataset(dir_path / name, lines, capture_start=_START, capture_end=_END)
 
 
-def _make_model_dir_with_record(
-    tmp_path: Path, baselines_root: Path, dataset_name: str
-) -> Path:
+def _make_model_dir_with_record(tmp_path: Path, baselines_root: Path, dataset_name: str) -> Path:
     """Create a fake model_dir with a valid model_record.json pointing at a baseline."""
     model_dir = tmp_path / "model_out"
     model_dir.mkdir()
@@ -100,15 +98,11 @@ def test_legacy_entry_fails_in_strict_mode(tmp_path: Path) -> None:
 # --- Modern entry with a valid model_record.json --------------------------
 
 
-def test_modern_entry_matches(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_modern_entry_matches(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     baselines_root = tmp_path / "baselines"
     baselines_root.mkdir()
     _make_baseline(baselines_root, name="linux__dev__abc__2026-09-14")
-    model_dir = _make_model_dir_with_record(
-        tmp_path, baselines_root, "linux__dev__abc__2026-09-14"
-    )
+    model_dir = _make_model_dir_with_record(tmp_path, baselines_root, "linux__dev__abc__2026-09-14")
     scenarios_root = tmp_path / "scenarios"
     scenarios_root.mkdir()
 
@@ -122,12 +116,8 @@ def test_modern_entry_detects_baseline_mutation(tmp_path: Path) -> None:
     model was trained no longer matches, and the release gate catches it."""
     baselines_root = tmp_path / "baselines"
     baselines_root.mkdir()
-    baseline_dir = _make_baseline(
-        baselines_root, name="linux__dev__abc__2026-09-14"
-    )
-    model_dir = _make_model_dir_with_record(
-        tmp_path, baselines_root, "linux__dev__abc__2026-09-14"
-    )
+    baseline_dir = _make_baseline(baselines_root, name="linux__dev__abc__2026-09-14")
+    model_dir = _make_model_dir_with_record(tmp_path, baselines_root, "linux__dev__abc__2026-09-14")
     scenarios_root = tmp_path / "scenarios"
     scenarios_root.mkdir()
 
@@ -156,14 +146,13 @@ def test_modern_entry_detects_missing_baseline(tmp_path: Path) -> None:
     baselines_root = tmp_path / "baselines"
     baselines_root.mkdir()
     _make_baseline(baselines_root, name="linux__dev__abc__2026-09-14")
-    model_dir = _make_model_dir_with_record(
-        tmp_path, baselines_root, "linux__dev__abc__2026-09-14"
-    )
+    model_dir = _make_model_dir_with_record(tmp_path, baselines_root, "linux__dev__abc__2026-09-14")
     scenarios_root = tmp_path / "scenarios"
     scenarios_root.mkdir()
 
     # Delete the baseline directory after the record was written.
     import shutil
+
     shutil.rmtree(baselines_root / "linux__dev__abc__2026-09-14")
 
     with pytest.raises(VerificationError, match="provenance check failed"):

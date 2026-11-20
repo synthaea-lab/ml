@@ -296,4 +296,3 @@ DISABLED_T0_MUTATORS = (
     TokenSplittingMutator(),
     PaddingMutator(),
 )
-

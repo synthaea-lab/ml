@@ -92,9 +92,7 @@ def extract_features(
     # ADR-0008: Connect and NetworkFlow (netlink) are absorbed into the same
     # daddr/dport sets — one count of "distinct destinations touched" regardless of
     # which sensor captured them. connect_count above stays Connect-only.
-    daddrs = {
-        tuple(e["daddr_v4"]) for e in pid_events if e["type"] in ("connect", "network_flow")
-    }
+    daddrs = {tuple(e["daddr_v4"]) for e in pid_events if e["type"] in ("connect", "network_flow")}
     dports = {e["dport"] for e in pid_events if e["type"] in ("connect", "network_flow")}
 
     has_full_chain = (

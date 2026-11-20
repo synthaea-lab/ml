@@ -234,9 +234,7 @@ def benign_matrix(dataset_dirs: list[Path]) -> np.ndarray:
         for record in load_records(directory / BEHAVIOR_CAPTURE_FILENAME):
             total += 1
             rows[tuple(measured_features(record))] = None
-    logger.info(
-        "Benign capture: %d process incarnations -> %d distinct vectors", total, len(rows)
-    )
+    logger.info("Benign capture: %d process incarnations -> %d distinct vectors", total, len(rows))
     return np.array(list(rows), dtype=np.float32).reshape(-1, MEASURED_FEATURE_COUNT)
 
 

@@ -55,7 +55,12 @@ def connect_ev(pid, ts_ns, daddr, dport):
 
 
 def write_ev(pid, ts_ns):
-    return {"type": "fileopen", "pid": pid, "ts_ns": ts_ns, "flags": 0o1 | 0o100}  # O_WRONLY|O_CREAT
+    return {
+        "type": "fileopen",
+        "pid": pid,
+        "ts_ns": ts_ns,
+        "flags": 0o1 | 0o100,
+    }  # O_WRONLY|O_CREAT
 
 
 # ── Training distribution: what a normal process's window looks like ──────────
@@ -85,9 +90,7 @@ train_x = np.array(_benign_window(400), dtype=np.float32)
 # tightly — the benign blob separates better than on text features (0.05). Matches
 # train_correlation.py. Tree count / sample cap kept small (like gen_scorer_golden.py):
 # this fixture pins Rust==Python inference, not detection quality.
-model = IsolationForest(
-    n_estimators=20, max_samples=64, contamination=0.02, random_state=42
-)
+model = IsolationForest(n_estimators=20, max_samples=64, contamination=0.02, random_state=42)
 model.fit(train_x)
 
 onnx_model = to_onnx(model, train_x, target_opset={"ai.onnx.ml": 3, "": 18})
@@ -99,21 +102,46 @@ LOCAL = (127, 0, 0, 1)
 C2 = (203, 0, 113, 7)
 GOLDEN_CASES = [
     # quiet network client — a couple of events, one destination
-    {"pid": 1001, "events": [exec_ev(1001, 0), connect_ev(1001, 1 * S, LOCAL, 443),
-                             connect_ev(1001, 2 * S, LOCAL, 443)]},
+    {
+        "pid": 1001,
+        "events": [
+            exec_ev(1001, 0),
+            connect_ev(1001, 1 * S, LOCAL, 443),
+            connect_ev(1001, 2 * S, LOCAL, 443),
+        ],
+    },
     # routine build-ish: spawn + a few writes
-    {"pid": 1002, "events": [exec_ev(1002, 0), write_ev(1002, 1 * S), write_ev(1002, 2 * S),
-                             write_ev(1002, 3 * S)]},
+    {
+        "pid": 1002,
+        "events": [
+            exec_ev(1002, 0),
+            write_ev(1002, 1 * S),
+            write_ev(1002, 2 * S),
+            write_ev(1002, 3 * S),
+        ],
+    },
     # beacon: one dest, many connects, steady cadence
-    {"pid": 1003, "events": [exec_ev(1003, 0)] + [connect_ev(1003, i * 900 * MS, C2, 4444)
-                                                  for i in range(1, 14)]},
+    {
+        "pid": 1003,
+        "events": [exec_ev(1003, 0)]
+        + [connect_ev(1003, i * 900 * MS, C2, 4444) for i in range(1, 14)],
+    },
     # full dropper chain: spawn + write + external connect, tight span
-    {"pid": 1004, "events": [exec_ev(1004, 0), write_ev(1004, 200 * MS),
-                             connect_ev(1004, 500 * MS, C2, 8080),
-                             connect_ev(1004, 900 * MS, C2, 8080)]},
+    {
+        "pid": 1004,
+        "events": [
+            exec_ev(1004, 0),
+            write_ev(1004, 200 * MS),
+            connect_ev(1004, 500 * MS, C2, 8080),
+            connect_ev(1004, 900 * MS, C2, 8080),
+        ],
+    },
     # fan-out scan: many destinations, many ports
-    {"pid": 1005, "events": [exec_ev(1005, 0)] + [connect_ev(1005, i * 100 * MS, (10, 0, 0, i), 1000 + i)
-                                                  for i in range(1, 20)]},
+    {
+        "pid": 1005,
+        "events": [exec_ev(1005, 0)]
+        + [connect_ev(1005, i * 100 * MS, (10, 0, 0, i), 1000 + i) for i in range(1, 20)],
+    },
     # gated: only two events for the pid -> scorer returns None, model not asked
     {"pid": 1006, "events": [exec_ev(1006, 0), connect_ev(1006, 1 * S, LOCAL, 80)]},
     # gated: pid absent from the window entirely
@@ -132,8 +160,9 @@ for case in GOLDEN_CASES:
     lines.append(json.dumps({"events": case["events"], "pid": case["pid"], "score": score}))
 
 # Sanity: onnxruntime and scikit-learn must agree on the scored cases (verify_onnx).
-scored = [c for c in GOLDEN_CASES
-          if extract_features(c["events"], c["pid"])[GATE_IDX] >= MIN_EVENT_COUNT]
+scored = [
+    c for c in GOLDEN_CASES if extract_features(c["events"], c["pid"])[GATE_IDX] >= MIN_EVENT_COUNT
+]
 xs = np.array([extract_features(c["events"], c["pid"]) for c in scored], dtype=np.float32)
 skl = model.decision_function(xs)
 onnx = sess.run(["scores"], {"X": xs})[0].reshape(-1)

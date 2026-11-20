@@ -25,9 +25,8 @@ class LCG:
     def next(self) -> int:
         """Advance state and return next value."""
         self.state = (
-            (self.state * 6_364_136_223_846_793_005 + 1_442_695_040_888_963_407)
-            & 0xFFFFFFFFFFFFFFFF
-        )
+            self.state * 6_364_136_223_846_793_005 + 1_442_695_040_888_963_407
+        ) & 0xFFFFFFFFFFFFFFFF
         return self.state
 
     def uniform(self, low: int, high: int) -> int:

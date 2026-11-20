@@ -307,9 +307,7 @@ def test_verify_training_record_matches_after_write(tmp_path: Path) -> None:
     baseline_dir = baselines_root / "linux__dev__abc__2026-09-11"
     baseline_dir.mkdir()
     _make_baseline_with_manifest(baseline_dir, lines=['{"argv": ["ls"]}'])
-    dv = dataset_version_from_manifest(
-        baseline_dir, name="linux__dev__abc__2026-09-11"
-    )
+    dv = dataset_version_from_manifest(baseline_dir, name="linux__dev__abc__2026-09-11")
 
     model_dir = tmp_path / "model"
     model_dir.mkdir()
@@ -330,9 +328,7 @@ def test_verify_training_record_detects_edited_baseline(tmp_path: Path) -> None:
     baseline_dir = baselines_root / "linux__dev__abc__2026-09-11"
     baseline_dir.mkdir()
     _make_baseline_with_manifest(baseline_dir, lines=['{"argv": ["ls"]}'])
-    dv = dataset_version_from_manifest(
-        baseline_dir, name="linux__dev__abc__2026-09-11"
-    )
+    dv = dataset_version_from_manifest(baseline_dir, name="linux__dev__abc__2026-09-11")
     model_dir = tmp_path / "model"
     model_dir.mkdir()
     write_training_record(
@@ -489,7 +485,9 @@ def test_an_unreadable_sibling_manifest_fails_the_lookup_naming_its_directory(
 def test_compute_passed_all_expected_in_range() -> None:
     expected = [
         ExpectedDetection(technique="T1071", rule="check_beacon", min_count=3, tolerance=1),
-        ExpectedDetection(technique="T1059.004", rule="check_base64_decode", min_count=1, tolerance=0),
+        ExpectedDetection(
+            technique="T1059.004", rule="check_base64_decode", min_count=1, tolerance=0
+        ),
     ]
     observed = [
         ObservedDetection(technique="T1071", rule="check_beacon", count=3),
@@ -501,8 +499,12 @@ def test_compute_passed_all_expected_in_range() -> None:
 def test_compute_passed_upper_bound_is_min_plus_tolerance() -> None:
     """`min_count + tolerance` is inclusive on the upper bound; one over is a fail."""
     expected = [ExpectedDetection(technique="T1071", rule="r", min_count=3, tolerance=2)]
-    assert compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=5)]) is True
-    assert compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=6)]) is False
+    assert (
+        compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=5)]) is True
+    )
+    assert (
+        compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=6)]) is False
+    )
 
 
 def test_compute_passed_under_detection_fails() -> None:
@@ -533,15 +535,21 @@ def test_compute_passed_missing_observation_fails() -> None:
 
 def test_compute_passed_zero_tolerance_exact_match() -> None:
     expected = [ExpectedDetection(technique="T1071", rule="r", min_count=3, tolerance=0)]
-    assert compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=3)]) is True
-    assert compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=4)]) is False
+    assert (
+        compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=3)]) is True
+    )
+    assert (
+        compute_passed(expected, [ObservedDetection(technique="T1071", rule="r", count=4)]) is False
+    )
 
 
 def test_compute_passed_composite_technique_string_exact_match() -> None:
     """`technique` may be a combined string like ``"T1105/T1059/T1071"`` — the
     passing criterion is exact string equality on both fields, no ATT&CK
     decomposition."""
-    expected = [ExpectedDetection(technique="T1105/T1059/T1071", rule="r", min_count=1, tolerance=0)]
+    expected = [
+        ExpectedDetection(technique="T1105/T1059/T1071", rule="r", min_count=1, tolerance=0)
+    ]
     matched = [ObservedDetection(technique="T1105/T1059/T1071", rule="r", count=1)]
     decomposed = [ObservedDetection(technique="T1105", rule="r", count=1)]  # partial → miss
     assert compute_passed(expected, matched) is True
@@ -565,12 +573,20 @@ def _make_replay(
     record); callers that want to test the mutation path pass ``passed=`` explicitly.
     """
     _, sha = write_scenario_yaml(scenarios_root, name, contents)
-    exp = expected if expected is not None else [
-        ExpectedDetection(technique="T1071", rule="r", min_count=1, tolerance=0),
-    ]
-    obs = observed if observed is not None else [
-        ObservedDetection(technique="T1071", rule="r", count=1),
-    ]
+    exp = (
+        expected
+        if expected is not None
+        else [
+            ExpectedDetection(technique="T1071", rule="r", min_count=1, tolerance=0),
+        ]
+    )
+    obs = (
+        observed
+        if observed is not None
+        else [
+            ObservedDetection(technique="T1071", rule="r", count=1),
+        ]
+    )
     return ScenarioReplayResult(
         scenario_name=name,
         scenario_yaml_sha256=sha,
@@ -633,9 +649,7 @@ def test_verify_training_record_verifies_scenario_replays(tmp_path: Path) -> Non
     baseline_dir = baselines_root / "linux__dev__abc__2026-09-11"
     baseline_dir.mkdir()
     _make_baseline_with_manifest(baseline_dir, lines=['{"argv": ["ls"]}'])
-    dv = dataset_version_from_manifest(
-        baseline_dir, name="linux__dev__abc__2026-09-11"
-    )
+    dv = dataset_version_from_manifest(baseline_dir, name="linux__dev__abc__2026-09-11")
     scenarios_root = tmp_path / "scenarios"
     replay = _make_replay(scenarios_root, name="beacon", contents="kind: beacon\n")
 
@@ -663,9 +677,7 @@ def test_verify_training_record_detects_mutated_scenario_yaml_end_to_end(tmp_pat
     baseline_dir = baselines_root / "linux__dev__abc__2026-09-11"
     baseline_dir.mkdir()
     _make_baseline_with_manifest(baseline_dir, lines=['{"argv": ["ls"]}'])
-    dv = dataset_version_from_manifest(
-        baseline_dir, name="linux__dev__abc__2026-09-11"
-    )
+    dv = dataset_version_from_manifest(baseline_dir, name="linux__dev__abc__2026-09-11")
     scenarios_root = tmp_path / "scenarios"
     replay = _make_replay(scenarios_root, name="beacon", contents="v1\n")
 
