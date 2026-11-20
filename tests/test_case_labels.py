@@ -11,6 +11,7 @@ import pytest
 from helpers import write_jsonl
 from siblings import needs, sibling
 
+from synthaea_ml import siblings
 from synthaea_ml.cases import label as lab
 from synthaea_ml.data.process_tree import descendants_in, process_edges
 
@@ -461,6 +462,12 @@ def test_the_command_line_writes_one_label_per_case(tmp_path: Path, scenario_dir
     rows = [json.loads(line) for line in (tmp_path / "labels.jsonl").read_text().splitlines()]
     # Plain strings, not the enum: the file's contract is the label's string value.
     assert [(r["case_id"], r["label"]) for r in rows] == [("a", "scenario"), ("b", "background")]
+
+
+def test_the_scenario_dir_defaults_to_the_scenarios_sibling() -> None:
+    args = lab.parse_args(["--run-json", "r", "--events", "e", "--cases", "c", "--output", "o"])
+
+    assert args.scenario_dir == siblings.scenario_sidecars()
 
 
 def test_the_command_line_fails_on_a_bad_run_json_without_a_traceback(

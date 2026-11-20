@@ -177,12 +177,16 @@ def write_training_record(
         conformal_calibration=conformal_calibration,
         feature_bounds=feature_bounds,
     )
+    save_training_record(model_dir, record)
+    return record
 
+
+def save_training_record(model_dir: Path, record: TrainingRecord) -> None:
+    """Write ``record`` as ``model_dir/model_record.json``, replacing any earlier one."""
     write_lf_text(
         model_dir / MODEL_RECORD_FILENAME,
         json.dumps(record_to_dict(record), indent=2, sort_keys=True) + "\n",
     )
-    return record
 
 
 # ── Read ────────────────────────────────────────────────────────────────────
@@ -427,9 +431,7 @@ class _Fields:
         """The nested block at ``key``, or ``None`` when absent."""
         return self.block(key, decode) if key in self._values else None
 
-    def blocks(
-        self, key: str, decode: _Decoder[_Block], *, optional: bool = False
-    ) -> list[_Block]:
+    def blocks(self, key: str, decode: _Decoder[_Block], *, optional: bool = False) -> list[_Block]:
         """The array of nested blocks at ``key``; an optional array may be absent (empty)."""
         return [
             decode(item, f"{self._where}.{key}[{index}]")
@@ -458,7 +460,6 @@ class _Fields:
         return RecordFormatError(
             f"{self._where}.{key}: expected {expected}, got {_json_type(value)}"
         )
-
 
 
 def _json_type(value: object) -> str:
