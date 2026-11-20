@@ -26,6 +26,10 @@ Each case gets one of four labels:
   whose daemon parent was silent, so these are left out rather than guessed;
 - `background`: anything else (the agent, SSH, cron).
 
+The ancestry `label` is the training target; `reached_expected` is a coverage diagnostic only.
+It is computed from the case's own `techniques`, so a trainer that used it as a target over
+technique-derived features would learn the label from its inputs.
+
 What it does not do: decide what a negative is for training. `background` cases are host
 activity during an attack run, not a benign corpus (ml#2), and `scenario` cases that reached
 no expected technique are still the scenario's: whether to train on them is the trainer's call.
@@ -44,8 +48,11 @@ import sys
 from collections import Counter
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import asdict, dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 from synthaea_ml import siblings
 from synthaea_ml.cli_logging import configure_cli_logging
@@ -54,10 +61,23 @@ from synthaea_ml.evaluation.scenario_replay import load_expected_detections
 
 logger = logging.getLogger(__name__)
 
-SCENARIO = "scenario"
-HARNESS = "harness"
-UNATTRIBUTED = "unattributed"
-BACKGROUND = "background"
+
+class Label(StrEnum):
+    """Where a case comes from; serialises as its plain string value."""
+
+    SCENARIO = "scenario"
+    HARNESS = "harness"
+    UNATTRIBUTED = "unattributed"
+    BACKGROUND = "background"
+
+
+SCENARIO = Label.SCENARIO
+HARNESS = Label.HARNESS
+UNATTRIBUTED = Label.UNATTRIBUTED
+BACKGROUND = Label.BACKGROUND
+
+# Scenarios that exist only for the capture (odd parents for T1) have no sidecar by design.
+ODD_PARENTS_PREFIX = "odd-parents/"
 
 # A scenario's root (the `timeout` it runs under) is forked after its recorded start, so it
 # needs no lead beyond clock granularity between `date` and the sensor's timestamp.
@@ -91,7 +111,7 @@ class CaseLabel:
     case is not a scenario's or its scenario has no sidecar."""
 
     case_id: str
-    label: str
+    label: Label
     scenario: str | None
     techniques: tuple[str, ...]
     expected_techniques: tuple[str, ...] | None
@@ -215,18 +235,35 @@ def _log_shared_processes(by_scenario: Mapping[str, set[ProcessKey]]) -> None:
 
 
 def expected_techniques(scenario_dir: Path, names: Sequence[str]) -> dict[str, tuple[str, ...]]:
-    """The sidecar's expected techniques of each scenario in `names` that has one.
+    """The sidecar's expected techniques of each scenario in `names`.
 
-    Scenarios without a sidecar (`odd-parents/*`, which exist only for the capture) are left
+    `odd-parents/*` scenarios, which exist only for the capture, have no sidecar: they are left
     out, so their cases carry no expected techniques rather than an empty list that reads as
-    "expected nothing".
+    "expected nothing". Every other scenario must have one.
+
+    Raises:
+        FileNotFoundError: If a scenario outside `odd-parents/` has no sidecar: a wrong
+            `--scenario-dir` or a missing scenarios checkout, which would otherwise leave every
+            case without its expectation and still exit 0.
+        ValueError: If a sidecar is malformed, or its `name:` is not its file stem (the label
+            names a scenario by the stem `malicious-run.sh` records).
     """
     expected: dict[str, tuple[str, ...]] = {}
     for name in names:
-        sidecar = scenario_dir / f"{name}.yaml"
-        if "/" in name or not sidecar.is_file():
+        if name.startswith(ODD_PARENTS_PREFIX):
             continue
-        _, detections = load_expected_detections(sidecar)
+        sidecar = scenario_dir / f"{name}.yaml"
+        if not sidecar.is_file():
+            raise FileNotFoundError(
+                f"{sidecar}: no sidecar for scenario {name!r} (wrong --scenario-dir, or the "
+                "scenarios checkout is missing)"
+            )
+        try:
+            sidecar_name, detections = load_expected_detections(sidecar)
+        except (KeyError, TypeError, yaml.YAMLError) as err:
+            raise ValueError(f"{sidecar}: malformed sidecar: {err!r}") from err
+        if sidecar_name != name:
+            raise ValueError(f"{sidecar}: `name: {sidecar_name}` is not its file stem {name!r}")
         expected[name] = tuple(d.technique for d in detections)
     return expected
 
@@ -278,6 +315,7 @@ def label_case(
                 expected_techniques=wanted,
                 reached_expected=None if wanted is None else bool(set(wanted) & set(techniques)),
             )
+    label: Label
     if parent in trees.runner:
         label = HARNESS
     elif parent not in trees.seen:
@@ -351,7 +389,7 @@ def parse_args(argv: Sequence[str] | None = None) -> LabelArgs:
     )
 
 
-def run(args: LabelArgs) -> dict[str, Any]:
+def label_run(args: LabelArgs) -> dict[str, Any]:
     """Label the cases, write one label per line to `args.output`, and return the summary."""
     labels = label_cases(load_run(args.run_json), args.events, args.cases, args.scenario_dir)
     with args.output.open("w", encoding="utf-8", newline="\n") as out:
@@ -367,7 +405,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     configure_cli_logging()
     try:
-        run(args)
+        label_run(args)
     except (ValueError, OSError) as err:
         logger.error("%s", err)
         return 1

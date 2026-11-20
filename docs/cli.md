@@ -179,10 +179,13 @@ parent never appears in the capture, `background` for the host's),
 `reached_expected`: whether the case reached any of the sidecar's techniques, matched as exact
 strings. This is any-of per case, not the scenario replay's `compute_passed` (all expected
 `(technique, rule)` pairs with counts), since a scenario's techniques are spread over its cases.
-`--scenario-dir` defaults to the `scenarios` sibling checkout. Logs a summary per label and per
-scenario on stderr. Exits 1 on a missing or unreadable input, or a `run.json` or cases file it
-cannot trust, including a `run.json` written before per-scenario windows or one naming a
-scenario twice.
+`--scenario-dir` defaults to the `scenarios` sibling checkout; every scenario of the run outside
+`odd-parents/` must have its sidecar there. `label` is the training target; `reached_expected`
+is a coverage diagnostic computed from the case's own `techniques`, not a target. Logs a summary
+per label and per scenario on stderr. Exits 1 on a missing or unreadable input, or a `run.json`,
+cases file or sidecar it cannot trust: a `run.json` written before per-scenario windows or
+naming a scenario twice, a scenario with no sidecar (a wrong `--scenario-dir`), a malformed
+sidecar, or one whose `name:` is not its file stem.
 
 ### `synthaea-ml-verify-onnx`
 

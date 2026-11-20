@@ -280,7 +280,80 @@ def test_a_process_in_two_scenario_trees_is_logged_and_goes_to_the_first(
     assert got.scenario == "dropper-chain"
 
 
-# ── run.json and cases.jsonl the labeller refuses ───────────────────────────────────────
+def test_a_capture_with_a_non_json_line_before_the_last_is_read_with_a_count(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    events = tmp_path / "events.jsonl"
+    rows = [json.dumps(row) for row in EVENTS]
+    events.write_text("\n".join([rows[0], "garbage", "[1]", *rows[1:], '{"torn']), "utf-8")
+    with caplog.at_level(logging.WARNING):
+        edges = process_edges(events)
+    assert len(edges) == len(EVENTS)
+    assert "skipped 2 line(s) before the last that are not JSON objects" in caplog.text
+
+
+def test_a_capture_whose_only_bad_line_is_a_torn_last_one_reads_without_a_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    events = tmp_path / "events.jsonl"
+    events.write_text("\n".join([*(json.dumps(row) for row in EVENTS), '{"torn']), "utf-8")
+    with caplog.at_level(logging.WARNING):
+        process_edges(events)
+    assert caplog.text == ""
+
+
+def test_an_event_without_a_timestamp_is_counted_since_it_falls_outside_every_window(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    no_ts = {"type": "exec", "meta": {"pid": 300, "ppid": RUNNER}}
+    events = write_jsonl(tmp_path / "events.jsonl", [*EVENTS, no_ts])
+    with caplog.at_level(logging.WARNING):
+        edges = process_edges(events)
+    assert edges[(300, None)] == (RUNNER, None, 0)
+    assert "1 event(s) have no meta timestamp_ns" in caplog.text
+
+
+# ── run.json, sidecars and cases.jsonl the labeller refuses ─────────────────────────────
+
+
+def test_a_scenario_with_no_sidecar_outside_odd_parents_is_refused(tmp_path: Path) -> None:
+    """A wrong `--scenario-dir` used to leave every case's expectation `None` and exit 0
+    (review on ml#71): only `odd-parents/*` has no sidecar by design."""
+    with pytest.raises(FileNotFoundError, match="no sidecar for scenario 'dropper-chain'"):
+        lab.expected_techniques(tmp_path / "nonexistent", ["dropper-chain"])
+
+
+def test_odd_parents_scenarios_need_no_sidecar(tmp_path: Path) -> None:
+    assert lab.expected_techniques(tmp_path, ["odd-parents/webapp-spawns-shell"]) == {}
+
+
+@pytest.mark.parametrize(
+    "sidecar",
+    [
+        "name: dropper-chain\n",
+        "name: dropper-chain\nexpected_detections:\n  - technique: T1105\n",
+        "- just a list\n",
+        "",
+        "name: [unclosed\n",
+    ],
+    ids=["no expected_detections", "entry missing fields", "not a mapping", "empty", "bad yaml"],
+)
+def test_a_malformed_sidecar_is_refused_as_a_value_error(tmp_path: Path, sidecar: str) -> None:
+    (tmp_path / "dropper-chain.yaml").write_text(sidecar, encoding="utf-8")
+    with pytest.raises(ValueError, match="malformed sidecar"):
+        lab.expected_techniques(tmp_path, ["dropper-chain"])
+
+
+def test_a_sidecar_whose_name_is_not_its_file_stem_is_refused(
+    tmp_path: Path, scenario_dir: Path
+) -> None:
+    """The label names a scenario by the stem `malicious-run.sh` records, so a sidecar that
+    calls itself something else is describing another scenario."""
+    (scenario_dir / "beacon.yaml").write_text(
+        (scenario_dir / "dropper-chain.yaml").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="`name: dropper-chain` is not its file stem 'beacon'"):
+        lab.expected_techniques(scenario_dir, ["beacon"])
 
 
 def test_a_run_json_from_before_per_scenario_windows_is_refused_with_the_fix() -> None:
@@ -386,10 +459,8 @@ def test_the_command_line_writes_one_label_per_case(tmp_path: Path, scenario_dir
     )
     assert status == 0
     rows = [json.loads(line) for line in (tmp_path / "labels.jsonl").read_text().splitlines()]
-    assert [(r["case_id"], r["label"]) for r in rows] == [
-        ("a", lab.SCENARIO),
-        ("b", lab.BACKGROUND),
-    ]
+    # Plain strings, not the enum: the file's contract is the label's string value.
+    assert [(r["case_id"], r["label"]) for r in rows] == [("a", "scenario"), ("b", "background")]
 
 
 def test_the_command_line_fails_on_a_bad_run_json_without_a_traceback(
@@ -438,6 +509,32 @@ def test_the_command_line_fails_on_a_missing_input_without_a_traceback(
         )
     assert status == 1
     assert "missing.json" in caplog.text
+    assert not (tmp_path / "labels.jsonl").exists()
+
+
+def test_the_command_line_fails_on_a_wrong_scenario_dir_without_a_traceback(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    (tmp_path / "run.json").write_text(json.dumps(_run()), encoding="utf-8")
+    write_jsonl(tmp_path / "events.jsonl", EVENTS)
+    write_jsonl(tmp_path / "cases.jsonl", [_case("a", 111, 3, "T1105/T1059/T1071")])
+    with caplog.at_level(logging.ERROR):
+        status = lab.main(
+            [
+                "--run-json",
+                str(tmp_path / "run.json"),
+                "--events",
+                str(tmp_path / "events.jsonl"),
+                "--cases",
+                str(tmp_path / "cases.jsonl"),
+                "--scenario-dir",
+                str(tmp_path / "nonexistent"),
+                "--output",
+                str(tmp_path / "labels.jsonl"),
+            ]
+        )
+    assert status == 1
+    assert "no sidecar for scenario 'dropper-chain'" in caplog.text
     assert not (tmp_path / "labels.jsonl").exists()
 
 

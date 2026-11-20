@@ -10,9 +10,12 @@ alone. `t1_lineage_gain` uses it for the scenario runner's whole tree, the case 
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 from synthaea_ml.units import NS_PER_SECOND
+
+logger = logging.getLogger(__name__)
 
 #: A process identity: `(pid, process_generation)`. The generation tells a recycled pid's
 #: lives apart; it is `None` when the sensor did not stamp one.
@@ -32,20 +35,42 @@ def process_edges(path: Path) -> ProcessEdges:
     Every event carries its identity and its parent's in `meta`, so a process that forked
     and never exec'd (a subshell) still links its children to the runner. A line that is not
     a JSON object with a `meta` holding `pid` and `ppid` is skipped: a capture cut while the
-    agent was writing ends with a torn line.
+    agent was writing ends with a torn line. A line before the last that is not a JSON object,
+    and an event with no `timestamp_ns` (kept at 0, so outside every window), are counted and
+    logged: either means the capture is not what the trees assume.
     """
     edges: ProcessEdges = {}
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    not_json = 0
+    without_timestamp = 0
+    for number, line in enumerate(lines, 1):
         try:
-            meta = json.loads(line).get("meta")
-        except (json.JSONDecodeError, AttributeError):
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            event = None
+        if not isinstance(event, dict):
+            if line.strip() and number < len(lines):
+                not_json += 1
             continue
+        meta = event.get("meta")
         if not isinstance(meta, dict) or "pid" not in meta or "ppid" not in meta:
             continue
         key = (meta["pid"], meta.get("process_generation"))
+        if "timestamp_ns" not in meta:
+            without_timestamp += 1
         ts = meta.get("timestamp_ns", 0)
         if key not in edges or ts < edges[key][2]:
             edges[key] = (meta["ppid"], meta.get("parent_process_generation"), ts)
+    if not_json:
+        logger.warning(
+            "%s: skipped %d line(s) before the last that are not JSON objects", path, not_json
+        )
+    if without_timestamp:
+        logger.warning(
+            "%s: %d event(s) have no meta timestamp_ns; their processes fall outside every window",
+            path,
+            without_timestamp,
+        )
     return edges
 
 
