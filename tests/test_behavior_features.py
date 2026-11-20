@@ -98,8 +98,14 @@ def test_an_ipv4_connect_without_an_address_is_not_external() -> None:
 
 def test_daddr_v6_without_is_ipv6_is_ignored() -> None:
     # Rust decides on the address type, so `is_ipv6` alone selects the IPv6 branch here.
-    event = {"type": "connect", "ts_ns": 1_000_000_000, "dport": 443, "is_ipv6": False,
-             "daddr_v4": [8, 8, 8, 8], "daddr_v6": "::1"}
+    event = {
+        "type": "connect",
+        "ts_ns": 1_000_000_000,
+        "dport": 443,
+        "is_ipv6": False,
+        "daddr_v4": [8, 8, 8, 8],
+        "daddr_v6": "::1",
+    }
     assert named(extract_behavior_features([event]))["dest_is_external"] == 1.0
 
 
@@ -111,7 +117,9 @@ def test_an_ipv4_mapped_destination_is_classified_as_its_ipv4_address(addr: str)
     assert named(extract_behavior_features([connect_v6(addr)]))["dest_is_external"] == 0.0
 
 
-@pytest.mark.parametrize("addr", ["::1", "::", "fe80::1", "febf::1", "fc00::1", "fd12:3456::1", "ff02::1"])
+@pytest.mark.parametrize(
+    "addr", ["::1", "::", "fe80::1", "febf::1", "fc00::1", "fd12:3456::1", "ff02::1"]
+)
 def test_a_non_global_ipv6_destination_is_not_external(addr: str) -> None:
     assert named(extract_behavior_features([connect_v6(addr)]))["dest_is_external"] == 0.0
 
@@ -128,11 +136,15 @@ def test_an_ipv6_event_without_a_usable_address_is_not_external(addr: str | None
 
 
 def test_the_unspecified_ipv4_address_is_not_external() -> None:
-    assert named(extract_behavior_features([connect(1, [0, 0, 0, 0], 22)]))["dest_is_external"] == 0.0
+    assert (
+        named(extract_behavior_features([connect(1, [0, 0, 0, 0], 22)]))["dest_is_external"] == 0.0
+    )
 
 
 def test_only_the_exact_unspecified_ipv4_address_is_internal() -> None:
-    assert named(extract_behavior_features([connect(1, [0, 1, 2, 3], 22)]))["dest_is_external"] == 1.0
+    assert (
+        named(extract_behavior_features([connect(1, [0, 1, 2, 3], 22)]))["dest_is_external"] == 1.0
+    )
 
 
 def exec_with(image_path: str | None, cmdline: str) -> dict:
@@ -158,9 +170,12 @@ def test_the_path_is_the_image_path_not_argv0() -> None:
 
 
 def test_argv0_is_only_the_fallback_for_an_exec_without_image_path() -> None:
-    assert named(extract_behavior_features([exec_with(None, "/home/bob/Downloads/tool\0")]))[
-        "is_suspicious_path"
-    ] == 1.0
+    assert (
+        named(extract_behavior_features([exec_with(None, "/home/bob/Downloads/tool\0")]))[
+            "is_suspicious_path"
+        ]
+        == 1.0
+    )
 
 
 def test_an_empty_image_path_is_an_answer_not_a_gap() -> None:

@@ -221,7 +221,7 @@ def withhold_rows(x: np.ndarray, fraction: float, seed: int, rows: slice) -> np.
         return out
     start, stop, _ = rows.indices(len(x))
     chosen = np.random.default_rng(seed).random(stop - start) < fraction
-    out[start:stop][chosen, -len(rarity.FEATURE_NAMES):] = 0.0
+    out[start:stop][chosen, -len(rarity.FEATURE_NAMES) :] = 0.0
     return out
 
 
@@ -254,7 +254,11 @@ def compare_on_scenarios(
         name = Path(scenario).stem
         try:
             ref_card = run_robustness_evaluation(
-                reference, scenario, tier="T0", mutation_seed=RANDOM_SEED, threshold=reference_threshold
+                reference,
+                scenario,
+                tier="T0",
+                mutation_seed=RANDOM_SEED,
+                threshold=reference_threshold,
             )
         except ValueError as error:
             # Nothing the reference detects: there is nothing for the candidate to lose here.
@@ -262,7 +266,11 @@ def compare_on_scenarios(
             continue
         try:
             cand_card = run_robustness_evaluation(
-                withheld_model, scenario, tier="T0", mutation_seed=RANDOM_SEED, threshold=candidate_threshold
+                withheld_model,
+                scenario,
+                tier="T0",
+                mutation_seed=RANDOM_SEED,
+                threshold=candidate_threshold,
             )
         except ValueError as error:
             failures.append(
@@ -334,7 +342,8 @@ def _check_floor(
     failures: list[str] = []
     fp_reference = (
         flag_rate(reference.model.decision_function(x_base_test), reference.threshold)
-        if len(x_base_test) else 0.0
+        if len(x_base_test)
+        else 0.0
     )
     fp_withheld = withheld_fp_rate(candidate, candidate_cal, x_base_test)
     if fp_withheld > fp_reference + WITHHELD_FP_MARGIN:
@@ -344,10 +353,16 @@ def _check_floor(
             + reference.consequence
         )
     lines, scenario_failures = compare_on_scenarios(
-        candidate, candidate_cal.threshold, reference.model, reference.threshold,
-        reference.name, scenario_yamls,
+        candidate,
+        candidate_cal.threshold,
+        reference.model,
+        reference.threshold,
+        reference.name,
+        scenario_yamls,
     )
-    return FloorResult(reference.name, fp_reference, fp_withheld, lines, failures + scenario_failures)
+    return FloorResult(
+        reference.name, fp_reference, fp_withheld, lines, failures + scenario_failures
+    )
 
 
 def check_rarity_floor(
@@ -360,7 +375,9 @@ def check_rarity_floor(
 ) -> FloorResult:
     """The floor of the module docstring, against the same corpus's cmdline-only model."""
     reference = _Reference(
-        baseline, baseline_cal.threshold, "cmdline-only model",
+        baseline,
+        baseline_cal.threshold,
+        "cmdline-only model",
         "a fleet with no snapshot yet would see that false-positive rate",
     )
     return _check_floor(candidate, candidate_cal, reference, x_base_test, scenario_yamls)
@@ -378,7 +395,9 @@ def check_global_floor(
     does (plus `WITHHELD_FP_MARGIN`), nor be less robust on the scenario suite, each model at its
     own threshold."""
     reference = _Reference(
-        global_model, global_model.threshold, "global model",
+        global_model,
+        global_model.threshold,
+        "global model",
         "a fleet with no snapshot yet would see more false positives than with the global model",
     )
     floor = _check_floor(candidate, candidate_cal, reference, x_base_test, scenario_yamls)
@@ -559,9 +578,7 @@ def _load_matrices(args: SiteRarityArgs) -> SiteMatrices:
     interval_ns = int(args.interval_hours * NS_PER_HOUR)
     x_base, x_rare, known = build_matrices(records, args.k, args.min_hosts, interval_ns)
     if len(x_rare) < MIN_ROWS:
-        raise ValueError(
-            f"only {len(x_rare)} exec events in the corpus (need at least {MIN_ROWS})"
-        )
+        raise ValueError(f"only {len(x_rare)} exec events in the corpus (need at least {MIN_ROWS})")
     logger.info("%d exec events; rarity known for %.0f%% of them", len(x_rare), known * 100)
     return SiteMatrices(len(records), x_base, x_rare, known)
 
@@ -601,7 +618,8 @@ def run(args: SiteRarityArgs) -> None:
         clf, cal, base.model, base.calibration, x_test, args.robustness_scenarios
     )
     _require_floor(
-        floor, f"with the rarity withheld: false-positive rate {floor.fp_withheld:.2%}",
+        floor,
+        f"with the rarity withheld: false-positive rate {floor.fp_withheld:.2%}",
         "rarity floor",
     )
     global_floor = None
@@ -631,8 +649,12 @@ def run(args: SiteRarityArgs) -> None:
         conformal_calibration=cal,
         feature_bounds=candidate.forest.bounds,
         extra=record_extras(
-            args, matrices,
-            baseline=baseline, candidate=candidate, floor=floor, global_floor=global_floor,
+            args,
+            matrices,
+            baseline=baseline,
+            candidate=candidate,
+            floor=floor,
+            global_floor=global_floor,
         ),
     )
     print(f"Site model with rarity -> {args.output_dir}")

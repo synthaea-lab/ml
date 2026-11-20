@@ -72,8 +72,12 @@ def test_a_run_with_scenarios_and_the_global_model_writes_exactly_these_extras(
 
     extra = load_training_record(
         site_rarity_run(
-            "--withhold-fraction", "0.3", "--global-model-dir", str(directory),
-            "--robustness-scenarios", str(BEACON),
+            "--withhold-fraction",
+            "0.3",
+            "--global-model-dir",
+            str(directory),
+            "--robustness-scenarios",
+            str(BEACON),
         )
     ).extra
 
@@ -106,12 +110,20 @@ def test_a_run_with_scenarios_and_the_global_model_writes_exactly_these_extras(
 
 def test_the_extras_format_each_measurement_to_its_fixed_precision() -> None:
     args = rare.SiteRarityArgs(
-        site_corpus=Path("corpus.jsonl"), site_name="acme", output_dir=Path("out"), k=5,
-        min_hosts=4, interval_hours=12.5, withhold_fraction=0.25,
-        robustness_scenarios=(), global_model_dir=None,
+        site_corpus=Path("corpus.jsonl"),
+        site_name="acme",
+        output_dir=Path("out"),
+        k=5,
+        min_hosts=4,
+        interval_hours=12.5,
+        withhold_fraction=0.25,
+        robustness_scenarios=(),
+        global_model_dir=None,
     )
     matrices = rare.SiteMatrices(
-        record_count=1200, cmdline=np.zeros((3, 9)), with_rarity=np.zeros((3, 11)),
+        record_count=1200,
+        cmdline=np.zeros((3, 9)),
+        with_rarity=np.zeros((3, 11)),
         known_fraction=0.123456,
     )
 
@@ -121,13 +133,22 @@ def test_the_extras_format_each_measurement_to_its_fixed_precision() -> None:
 
     floor = rare.FloorResult("cmdline-only model", 0.0125, 0.01875, [], [])
     shipped = rare.FloorResult(
-        "global model", 0.03125, 0.01875, [], [],
-        threshold=-0.0625, threshold_source="model_metadata.json",
+        "global model",
+        0.03125,
+        0.01875,
+        [],
+        [],
+        threshold=-0.0625,
+        threshold_source="model_metadata.json",
     )
 
     extras = rare.record_extras(
-        args, matrices, baseline=measured(0.0125, -0.1234567), candidate=measured(0.0064, -0.5),
-        floor=floor, global_floor=shipped,
+        args,
+        matrices,
+        baseline=measured(0.0125, -0.1234567),
+        candidate=measured(0.0064, -0.5),
+        floor=floor,
+        global_floor=shipped,
     )
 
     assert extras == {

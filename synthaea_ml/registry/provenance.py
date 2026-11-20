@@ -216,7 +216,6 @@ def verify_scenario_replay(
         )
 
 
-
 def verify_robustness_card(card: RobustnessCard, scenarios_root: Path) -> None:
     """Re-verify one ``RobustnessCard``'s binding to its source yaml: its
     ``scenario_yaml_sha256`` must match the current content hash of
@@ -247,8 +246,7 @@ def _verify_scenario_yaml_hash(
     yaml_path = scenarios_root / f"{scenario_name}.yaml"
     if not yaml_path.exists():
         raise FileNotFoundError(
-            f"scenario yaml {yaml_path} missing — cannot verify {bound_by} for "
-            f"{scenario_name!r}"
+            f"scenario yaml {yaml_path} missing — cannot verify {bound_by} for {scenario_name!r}"
         )
     current_hash = sha256_file(yaml_path)
     if current_hash != locked_sha256:

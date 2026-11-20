@@ -21,7 +21,9 @@ def golden_rows() -> list[dict]:
     return read_golden_jsonl(FIXTURES / "t1_golden.jsonl")
 
 
-@pytest.mark.parametrize("row", golden_rows(), ids=lambda r: f"pid{r['pid']}-gen{r['process_generation']}")
+@pytest.mark.parametrize(
+    "row", golden_rows(), ids=lambda r: f"pid{r['pid']}-gen{r['process_generation']}"
+)
 def test_vectors_match_golden(row: dict) -> None:
     records = load_records(FIXTURES / "t1_events.jsonl")
     by_key = {(r["pid"], r.get("process_generation")): r for r in records}

@@ -93,7 +93,9 @@ def write_site_corpus(tmp_path: Path, hosts: int = 8, days: int = 20, per_day: i
         for h in range(hosts):
             for n in range(per_day):
                 shared = (day + h + n) % 4 != 0
-                sha = common[(h + n) % len(common)] if shared else f"{(h * 1000 + day * 10 + n):064x}"
+                sha = (
+                    common[(h + n) % len(common)] if shared else f"{(h * 1000 + day * 10 + n):064x}"
+                )
                 stamp = f"2026-09-{1 + day:02d}T{8 + n:02d}:{h:02d}:00Z"
                 argv = ["/usr/bin/tool", f"--mode{n % 3}", "x" * (1 + (day + n) % 5)]
                 rows.append(

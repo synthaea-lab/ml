@@ -8,7 +8,9 @@ from synthaea_ml.features import combined, correlation, lineage
 def test_combined_feature_count():
     """Combined features should have 14 features (8 correlation + 6 lineage)."""
     assert len(combined.FEATURE_NAMES) == 14
-    assert len(combined.FEATURE_NAMES) == len(correlation.FEATURE_NAMES) + len(lineage.FEATURE_NAMES)
+    assert len(combined.FEATURE_NAMES) == len(correlation.FEATURE_NAMES) + len(
+        lineage.FEATURE_NAMES
+    )
 
 
 def test_combined_feature_names():
@@ -27,7 +29,13 @@ def test_extract_combined_features_empty_events():
 def test_extract_combined_features_no_lineage():
     """Extract features when no exec event (no lineage info)."""
     events = [
-        {"type": "connect", "pid": 1000, "ts_ns": 1_000_000_000, "daddr_v4": [127, 0, 0, 1], "dport": 8080},
+        {
+            "type": "connect",
+            "pid": 1000,
+            "ts_ns": 1_000_000_000,
+            "daddr_v4": [127, 0, 0, 1],
+            "dport": 8080,
+        },
     ]
     features = combined.extract_combined_features(events, 1000)
 
@@ -68,8 +76,8 @@ def test_extract_combined_features_with_lineage():
     assert features[7] == 2.0  # event_count
 
     # Lineage features
-    assert features[8] == 1.0   # has_parent_lineage
-    assert features[9] == 0.0   # parent_comm_is_shell
+    assert features[8] == 1.0  # has_parent_lineage
+    assert features[9] == 0.0  # parent_comm_is_shell
     assert features[10] == 1.0  # parent_comm_is_webserver (nginx)
     assert features[12] == 1.0  # parent_path_is_system (/usr/sbin/)
 
@@ -113,9 +121,7 @@ def test_sanity_check_samples(sample_name):
 def test_webshell_pattern_detection():
     """Webshell attack should have distinctive feature signature."""
     sample = combined.SANITY_CHECK_SAMPLES["webshell_attack"]
-    features_dict = combined.extract_combined_features_dict(
-        sample["events"], sample["pid"]
-    )
+    features_dict = combined.extract_combined_features_dict(sample["events"], sample["pid"])
 
     # Should have correlation activity
     assert features_dict["connect_count"] >= 1.0
@@ -131,9 +137,7 @@ def test_webshell_pattern_detection():
 def test_malicious_macro_pattern_detection():
     """Malicious macro should have distinctive feature signature."""
     sample = combined.SANITY_CHECK_SAMPLES["malicious_macro"]
-    features_dict = combined.extract_combined_features_dict(
-        sample["events"], sample["pid"]
-    )
+    features_dict = combined.extract_combined_features_dict(sample["events"], sample["pid"])
 
     # Should have suspicious correlation activity
     assert features_dict["spawn_count"] >= 2.0
@@ -149,9 +153,7 @@ def test_malicious_macro_pattern_detection():
 def test_dropper_pattern_detection():
     """Dropper from suspicious path should have distinctive signature."""
     sample = combined.SANITY_CHECK_SAMPLES["dropper_from_tmp"]
-    features_dict = combined.extract_combined_features_dict(
-        sample["events"], sample["pid"]
-    )
+    features_dict = combined.extract_combined_features_dict(sample["events"], sample["pid"])
 
     # Should have high correlation activity
     assert features_dict["spawn_count"] >= 3.0
@@ -166,7 +168,13 @@ def test_pid_isolation():
     """Events from different PIDs should not interfere."""
     events = [
         {"type": "exec", "pid": 100, "ts_ns": 0, "image_path": "/bin/ls", "cmdline": "ls"},
-        {"type": "connect", "pid": 200, "ts_ns": 1_000_000_000, "daddr_v4": [1, 1, 1, 1], "dport": 80},
+        {
+            "type": "connect",
+            "pid": 200,
+            "ts_ns": 1_000_000_000,
+            "daddr_v4": [1, 1, 1, 1],
+            "dport": 80,
+        },
     ]
 
     features_100 = combined.extract_combined_features(events, 100)
@@ -187,14 +195,34 @@ def test_pid_isolation():
 def _two_lives():
     """One pid, two incarnations: the first connected out, the second only execs."""
     return [
-        {"type": "exec", "pid": 9, "process_generation": 1, "ts_ns": 1_000_000_000,
-         "image_path": "/bin/sh", "cmdline": "sh", "parent_comm": "nginx",
-         "parent_image_path": "/usr/sbin/nginx"},
-        {"type": "connect", "pid": 9, "process_generation": 1, "ts_ns": 2_000_000_000,
-         "daddr_v4": [10, 0, 0, 1], "dport": 4444},
-        {"type": "exec", "pid": 9, "process_generation": 2, "ts_ns": 5_000_000_000,
-         "image_path": "/bin/ls", "cmdline": "ls", "parent_comm": "bash",
-         "parent_image_path": "/bin/bash"},
+        {
+            "type": "exec",
+            "pid": 9,
+            "process_generation": 1,
+            "ts_ns": 1_000_000_000,
+            "image_path": "/bin/sh",
+            "cmdline": "sh",
+            "parent_comm": "nginx",
+            "parent_image_path": "/usr/sbin/nginx",
+        },
+        {
+            "type": "connect",
+            "pid": 9,
+            "process_generation": 1,
+            "ts_ns": 2_000_000_000,
+            "daddr_v4": [10, 0, 0, 1],
+            "dport": 4444,
+        },
+        {
+            "type": "exec",
+            "pid": 9,
+            "process_generation": 2,
+            "ts_ns": 5_000_000_000,
+            "image_path": "/bin/ls",
+            "cmdline": "ls",
+            "parent_comm": "bash",
+            "parent_image_path": "/bin/bash",
+        },
     ]
 
 
@@ -217,14 +245,16 @@ def test_no_generation_keeps_the_pid_only_behavior():
     """`None` on either side cannot disprove identity: stamp-less captures and the golden
     fixtures behave exactly as before."""
     features = dict(
-        zip(combined.FEATURE_NAMES, combined.extract_combined_features(_two_lives(), 9), strict=True)
+        zip(
+            combined.FEATURE_NAMES, combined.extract_combined_features(_two_lives(), 9), strict=True
+        )
     )
     assert features["spawn_count"] == 2.0
     assert features["connect_count"] == 1.0
     unstamped = [{k: v for k, v in e.items() if k != "process_generation"} for e in _two_lives()]
-    assert combined.extract_combined_features(unstamped, 9, 2) == combined.extract_combined_features(
-        unstamped, 9
-    )
+    assert combined.extract_combined_features(
+        unstamped, 9, 2
+    ) == combined.extract_combined_features(unstamped, 9)
 
 
 def test_same_generation_matches_the_rust_rule():

@@ -95,25 +95,29 @@ EVENTS = [
     exec_ev(1001, 1, 0, "bash", "/usr/bin/bash", ["bash", "-l"]),
     exec_ev(1001, 1, 1 * S, "ls", "/usr/bin/ls", ["ls", "-la", "/home/user"]),
     exec_ev(1001, 1, 2 * S, "cat", "/usr/bin/cat", ["cat", "/etc/hostname"]),
-
     exec_ev(1002, 1001, 3 * S, "curl", "/usr/bin/curl", ["curl", "-fsS", "https://mirror.test/x"]),
     connect_ev(1002, 1001, 3 * S + 100_000_000, "curl", "203.0.113.9", 443),
     connect_ev(1002, 1001, 4 * S, "curl", "203.0.113.9", 443),
     # netlink-only flow (ADR-0008): a distinct dest the `connect` uprobe never saw,
     # exercising the T2 daddr/dport absorption end-to-end through capture parity.
     network_flow_ev(1002, 1001, 4 * S + 300_000_000, "curl", 51234, "203.0.113.20", 8443),
-
     exec_ev(1003, 1001, 5 * S, "sh", "/usr/bin/dash", ["sh", "-c", "./stage2"]),
     file_open_ev(1003, 1001, 5 * S + 200_000_000, "sh", "/tmp/stage2", O_WRONLY_CREAT),
     connect_ev(1003, 1001, 5 * S + 500_000_000, "stage2", "198.51.100.4", 8080),
     connect_ev(1003, 1001, 6 * S, "stage2", "198.51.100.4", 8080),
-    {"type": "dns_query", "meta": meta(1003, 1001, 6 * S + 10_000_000, "stage2"),
-     "query": "c2.test", "qtype": 1, "result": None, "status": 0},
-
+    {
+        "type": "dns_query",
+        "meta": meta(1003, 1001, 6 * S + 10_000_000, "stage2"),
+        "query": "c2.test",
+        "qtype": 1,
+        "result": None,
+        "status": 0,
+    },
     exec_ev(1004, 1001, 7 * S, "scan", "/tmp/scan", ["/tmp/scan"]),
-    *[connect_ev(1004, 1001, 7 * S + i * 100_000_000, "scan", f"10.0.0.{i}", 1000 + i)
-      for i in range(1, 9)],
-
+    *[
+        connect_ev(1004, 1001, 7 * S + i * 100_000_000, "scan", f"10.0.0.{i}", 1000 + i)
+        for i in range(1, 9)
+    ],
     # single event for a PID — kept in the log, dropped by the default min-events=1? no,
     # min-events=1 keeps it; the Rust gate is a scorer concern, not the extractor's.
     exec_ev(1005, 1, 8 * S, "sleep", "/usr/bin/sleep", ["sleep", "30"]),
@@ -126,7 +130,9 @@ vectors = vectors_by_pid(load_events(events_path), window_ns=60 * S, min_events=
 golden_path = OUT / "capture_correlation_golden.jsonl"
 golden_path.write_text("".join(json.dumps(v) + "\n" for v in vectors), encoding="utf-8")
 
-print(f"wrote {events_path.name} ({len(EVENTS)} events) and {golden_path.name} "
-      f"({len(vectors)} PID vectors)")
+print(
+    f"wrote {events_path.name} ({len(EVENTS)} events) and {golden_path.name} "
+    f"({len(vectors)} PID vectors)"
+)
 for v in vectors:
     print(f"  pid={v['pid']:<5} {v['features']}")
