@@ -116,7 +116,7 @@ def test_a_case_under_a_scenario_that_reached_its_sidecar_technique_is_a_reachin
     tmp_path: Path, scenario_dir: Path
 ) -> None:
     got = _label(tmp_path, scenario_dir, [_case("c", 111, 3, "T1105", "T1105/T1059/T1071")])["c"]
-    assert got.label == lab.SCENARIO
+    assert got.label == lab.Label.SCENARIO
     assert got.scenario == "dropper-chain"
     assert got.expected_techniques == ("T1105/T1059/T1071",)
     assert got.reached_expected is True
@@ -128,7 +128,7 @@ def test_a_scenario_case_that_reached_only_part_of_a_combined_technique_did_not_
     """Techniques match as exact strings: `T1105` alone is not the sidecar's combined
     `T1105/T1059/T1071`."""
     got = _label(tmp_path, scenario_dir, [_case("c", 110, 2, "T1105")])["c"]
-    assert got.label == lab.SCENARIO
+    assert got.label == lab.Label.SCENARIO
     assert got.reached_expected is False
 
 
@@ -136,7 +136,7 @@ def test_a_child_the_scenario_left_running_after_its_window_is_still_the_scenari
     tmp_path: Path, scenario_dir: Path
 ) -> None:
     got = _label(tmp_path, scenario_dir, [_case("c", 112, 4)])["c"]
-    assert got.label == lab.SCENARIO
+    assert got.label == lab.Label.SCENARIO
     assert got.scenario == "dropper-chain"
 
 
@@ -144,7 +144,7 @@ def test_a_scenario_without_a_sidecar_carries_no_expectation_rather_than_an_empt
     tmp_path: Path, scenario_dir: Path
 ) -> None:
     got = _label(tmp_path, scenario_dir, [_case("c", 121, 6, "T1059")])["c"]
-    assert got.label == lab.SCENARIO
+    assert got.label == lab.Label.SCENARIO
     assert got.scenario == "odd-parents/webapp-spawns-shell"
     assert got.expected_techniques is None
     assert got.reached_expected is None
@@ -158,9 +158,9 @@ def test_the_runners_own_processes_are_harness_and_the_hosts_are_background(
         scenario_dir,
         [_case("sleep", 130, 7), _case("runner", RUNNER, 1), _case("cron", 200, 8)],
     )
-    assert got["sleep"].label == lab.HARNESS
-    assert got["runner"].label == lab.HARNESS
-    assert got["cron"].label == lab.BACKGROUND
+    assert got["sleep"].label == lab.Label.HARNESS
+    assert got["runner"].label == lab.Label.HARNESS
+    assert got["cron"].label == lab.Label.BACKGROUND
     assert all(label.scenario is None for label in got.values())
 
 
@@ -172,7 +172,7 @@ def test_a_recycled_pid_of_a_scenario_process_is_not_the_scenarios(
     got = _label(
         tmp_path, scenario_dir, [_case("c", 111, 99, "T1105/T1059/T1071")], [*EVENTS, recycled]
     )["c"]
-    assert got.label == lab.BACKGROUND
+    assert got.label == lab.Label.BACKGROUND
     assert got.reached_expected is None
 
 
@@ -184,7 +184,7 @@ def test_a_case_whose_parent_never_appears_in_the_capture_is_unattributed_not_ba
     never saw. It was labelled `background`, a scenario's attack counted as host activity."""
     nc = _event(141, 140, 13 * S, 10, 9)  # the subshell 140 (generation 9) is silent
     got = _label(tmp_path, scenario_dir, [_case("nc", 140, 9, "T1059/T1071")], [*EVENTS, nc])
-    assert got["nc"].label == lab.UNATTRIBUTED
+    assert got["nc"].label == lab.Label.UNATTRIBUTED
     assert got["nc"].scenario is None
 
 
@@ -215,7 +215,7 @@ def test_the_summary_counts_cases_and_reaching_cases_per_scenario(
         ],
     )
     summary = lab.summarize(list(labels.values()))
-    assert summary["by_label"] == {lab.SCENARIO: 2, lab.BACKGROUND: 1}
+    assert summary["by_label"] == {lab.Label.SCENARIO: 2, lab.Label.BACKGROUND: 1}
     assert summary["by_scenario"] == {"dropper-chain": {"cases": 2, "reached_expected": 1}}
 
 

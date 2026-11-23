@@ -71,11 +71,6 @@ class Label(StrEnum):
     BACKGROUND = "background"
 
 
-SCENARIO = Label.SCENARIO
-HARNESS = Label.HARNESS
-UNATTRIBUTED = Label.UNATTRIBUTED
-BACKGROUND = Label.BACKGROUND
-
 # Scenarios that exist only for the capture (odd parents for T1) have no sidecar by design.
 ODD_PARENTS_PREFIX = "odd-parents/"
 
@@ -202,7 +197,7 @@ def run_trees(events: Path, run: RunRecord) -> RunTrees:
     scenario in run order).
     """
     if not run.scenarios:
-        logger.warning("run.json lists no scenario: no case can be labelled `%s`", SCENARIO)
+        logger.warning("run.json lists no scenario: no case can be labelled `%s`", Label.SCENARIO)
     edges = process_edges(events)
     by_scenario = {
         scenario.name: descendants_in(
@@ -309,7 +304,7 @@ def label_case(
             wanted = expected.get(name)
             return CaseLabel(
                 case_id=case["case_id"],
-                label=SCENARIO,
+                label=Label.SCENARIO,
                 scenario=name,
                 techniques=techniques,
                 expected_techniques=wanted,
@@ -317,11 +312,11 @@ def label_case(
             )
     label: Label
     if parent in trees.runner:
-        label = HARNESS
+        label = Label.HARNESS
     elif parent not in trees.seen:
-        label = UNATTRIBUTED
+        label = Label.UNATTRIBUTED
     else:
-        label = BACKGROUND
+        label = Label.BACKGROUND
     return CaseLabel(
         case_id=case["case_id"],
         label=label,
