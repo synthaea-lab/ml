@@ -52,7 +52,9 @@ def positions(sha256_hex: str, bit_count: int, hash_count: int) -> list[int]:
     return [((h1 + i * h2) & MASK64) % bit_count for i in range(hash_count)]
 
 
-def build(hashes: list[str], min_hosts: int, hosts_covered: int, built_at: int, fpr: float) -> bytes:
+def build(
+    hashes: list[str], min_hosts: int, hosts_covered: int, built_at: int, fpr: float
+) -> bytes:
     unique = sorted(set(hashes))
     bit_count, hash_count = sizing(len(unique), fpr)
     body = bytearray(bit_count // 8)
@@ -60,7 +62,14 @@ def build(hashes: list[str], min_hosts: int, hosts_covered: int, built_at: int, 
         for p in positions(h, bit_count, hash_count):
             body[p >> 3] |= 1 << (p & 7)
     header = MAGIC + struct.pack(
-        "<HHIIIIQ", FORMAT_VERSION, hash_count, min_hosts, hosts_covered, len(unique), bit_count, built_at
+        "<HHIIIIQ",
+        FORMAT_VERSION,
+        hash_count,
+        min_hosts,
+        hosts_covered,
+        len(unique),
+        bit_count,
+        built_at,
     )
     assert len(header) == HEADER_BYTES
     return header + bytes(body)
@@ -68,7 +77,10 @@ def build(hashes: list[str], min_hosts: int, hosts_covered: int, built_at: int, 
 
 def contains(blob: bytes, sha256_hex: str) -> bool:
     _, hash_count, _, _, _, bit_count, _ = struct.unpack_from("<HHIIIIQ", blob, 4)
-    return all(blob[HEADER_BYTES + (p >> 3)] >> (p & 7) & 1 for p in positions(sha256_hex, bit_count, hash_count))
+    return all(
+        blob[HEADER_BYTES + (p >> 3)] >> (p & 7) & 1
+        for p in positions(sha256_hex, bit_count, hash_count)
+    )
 
 
 def digest(label: str) -> str:
@@ -89,7 +101,9 @@ def main() -> None:
     for name, n, min_hosts, covered, built_at, fpr in CASES:
         members = [digest(f"{name}-member-{i}") for i in range(n)]
         blob = build(members, min_hosts, covered, built_at, fpr)
-        absent = [h for h in (digest(f"{name}-other-{i}") for i in range(400)) if not contains(blob, h)][:20]
+        absent = [
+            h for h in (digest(f"{name}-other-{i}") for i in range(400)) if not contains(blob, h)
+        ][:20]
         cases.append(
             {
                 "name": name,

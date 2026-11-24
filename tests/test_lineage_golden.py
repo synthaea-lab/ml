@@ -47,8 +47,12 @@ def test_golden_covers_all_parent_types() -> None:
 
     # Check coverage of key attack patterns
     assert any("bash" in name or "shell" in name for name in names), "missing shell parent tests"
-    assert any("nginx" in name or "webserver" in name or "w3wp" in name for name in names), "missing webserver parent tests"
-    assert any("winword" in name or "excel" in name or "office" in name for name in names), "missing office parent tests"
+    assert any("nginx" in name or "webserver" in name or "w3wp" in name for name in names), (
+        "missing webserver parent tests"
+    )
+    assert any("winword" in name or "excel" in name or "office" in name for name in names), (
+        "missing office parent tests"
+    )
     assert any("system_path" in name for name in names), "missing system path tests"
     assert any("suspicious_path" in name for name in names), "missing suspicious path tests"
 

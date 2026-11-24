@@ -54,9 +54,7 @@ def parse_trainer_args(
 ) -> TrainerArgs:
     """The trainer options from `argv` (the process's arguments when `None`)."""
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument(
-        "--dataset", type=Path, required=True, nargs="+", help=help_text.dataset
-    )
+    parser.add_argument("--dataset", type=Path, required=True, nargs="+", help=help_text.dataset)
     parser.add_argument("--output-dir", type=Path, required=True, help=help_text.output_dir)
     parser.add_argument(
         "--robustness-scenarios",

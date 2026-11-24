@@ -37,7 +37,9 @@ def golden_rows() -> list[dict]:
     return read_golden_jsonl(GOLDEN)
 
 
-@pytest.mark.parametrize("row", golden_rows(), ids=lambda r: f"{r['mutation_class']}_{r['intensity']}")
+@pytest.mark.parametrize(
+    "row", golden_rows(), ids=lambda r: f"{r['mutation_class']}_{r['intensity']}"
+)
 def test_mutation_features_match_golden(row: dict) -> None:
     """Validate that mutation + feature extraction matches golden fixture."""
     # Extract test case
@@ -61,8 +63,9 @@ def test_mutation_features_match_golden(row: dict) -> None:
     if "argv" in expected_mutated:
         assert "argv" in mutated, "mutated record missing argv field"
         # Lengths should match
-        assert len(mutated["argv"]) == len(expected_mutated["argv"]), \
+        assert len(mutated["argv"]) == len(expected_mutated["argv"]), (
             f"argv length mismatch: {len(mutated['argv'])} != {len(expected_mutated['argv'])}"
+        )
 
     # Extract features from original
     cmdline_original = ml_cmdline_from_record(original)
@@ -73,18 +76,26 @@ def test_mutation_features_match_golden(row: dict) -> None:
     features_mutated = extract_features(cmdline_mutated)
 
     # Validate features match golden (with small tolerance for floating point)
-    assert len(features_original) == len(expected_features_original), \
+    assert len(features_original) == len(expected_features_original), (
         "original features length mismatch"
-    assert len(features_mutated) == len(expected_features_mutated), \
+    )
+    assert len(features_mutated) == len(expected_features_mutated), (
         "mutated features length mismatch"
+    )
 
-    for i, (got_orig, expected_orig) in enumerate(zip(features_original, expected_features_original, strict=True)):
-        assert got_orig == pytest.approx(expected_orig, rel=1e-6, abs=1e-9), \
+    for i, (got_orig, expected_orig) in enumerate(
+        zip(features_original, expected_features_original, strict=True)
+    ):
+        assert got_orig == pytest.approx(expected_orig, rel=1e-6, abs=1e-9), (
             f"original feature[{i}] mismatch: {got_orig} != {expected_orig}"
+        )
 
-    for i, (got_mut, expected_mut) in enumerate(zip(features_mutated, expected_features_mutated, strict=True)):
-        assert got_mut == pytest.approx(expected_mut, rel=1e-6, abs=1e-9), \
+    for i, (got_mut, expected_mut) in enumerate(
+        zip(features_mutated, expected_features_mutated, strict=True)
+    ):
+        assert got_mut == pytest.approx(expected_mut, rel=1e-6, abs=1e-9), (
             f"mutated feature[{i}] mismatch: {got_mut} != {expected_mut}"
+        )
 
 
 def test_golden_covers_all_mutators() -> None:
@@ -93,8 +104,9 @@ def test_golden_covers_all_mutators() -> None:
     mutator_classes_in_golden = {r["mutation_class"] for r in rows}
 
     for mutator_name in MUTATORS:
-        assert mutator_name in mutator_classes_in_golden, \
+        assert mutator_name in mutator_classes_in_golden, (
             f"mutator {mutator_name!r} not covered by golden fixture"
+        )
 
 
 def test_golden_covers_all_intensities() -> None:
@@ -111,8 +123,9 @@ def test_golden_covers_all_intensities() -> None:
 
     for mutator, intensities in intensities_by_mutator.items():
         expected_intensities = {"light", "medium", "heavy"}
-        assert intensities >= expected_intensities, \
+        assert intensities >= expected_intensities, (
             f"mutator {mutator!r} missing intensities: {expected_intensities - intensities}"
+        )
 
 
 def test_intensity_enum_values_match_the_wire_strings() -> None:

@@ -104,7 +104,9 @@ def combine_corpora(global_corpus: list[str], site_corpus: list[str]) -> list[st
 
     logger.info(
         "Combined corpus: %d unique samples (%d global + %d site)",
-        len(combined), len(global_corpus), len(site_corpus),
+        len(combined),
+        len(global_corpus),
+        len(site_corpus),
     )
     return combined
 
@@ -119,7 +121,9 @@ def load_global_model(path: Path) -> Scorer:
         return cast(Scorer, pickle.load(f))  # noqa: S301 - the operator's own model, see above
 
 
-def check_global_floor(site_model: Scorer, global_model: Scorer, scenario_yaml: Path) -> CardComparison:
+def check_global_floor(
+    site_model: Scorer, global_model: Scorer, scenario_yaml: Path
+) -> CardComparison:
     """The site model's robustness on `scenario_yaml` against the global model's.
 
     Both are evaluated with `run_robustness_evaluation` (#45) at tier T0 and the same mutation
@@ -183,18 +187,39 @@ class SiteModelArgs:
 def parse_args(argv: Sequence[str] | None = None) -> SiteModelArgs:
     """The run's options from `argv` (the process's arguments when `None`)."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--global-dataset", type=Path, required=True,
-                        help="Global baseline directory (e.g., ml/datasets/baselines/linux__dev__abc__2026-09-11/)")
-    parser.add_argument("--site-corpus", type=Path, required=True,
-                        help="Site-specific corpus JSONL file (e.g., corpus-v1.jsonl)")
-    parser.add_argument("--output-dir", type=Path, required=True,
-                        help="Output directory for site model (e.g., ml/registry/cmdline-iforest-linux-site-acme/0.1.0/)")
-    parser.add_argument("--site-name", type=str, required=True,
-                        help="Site/tenant name for provenance")
-    parser.add_argument("--robustness-scenarios", type=Path, default=None,
-                        help="Scenario YAML for global-model-floor check (optional)")
-    parser.add_argument("--global-model", type=Path, default=None,
-                        help="Path to global model .pkl for floor check (optional)")
+    parser.add_argument(
+        "--global-dataset",
+        type=Path,
+        required=True,
+        help="Global baseline directory (e.g., ml/datasets/baselines/linux__dev__abc__2026-09-11/)",
+    )
+    parser.add_argument(
+        "--site-corpus",
+        type=Path,
+        required=True,
+        help="Site-specific corpus JSONL file (e.g., corpus-v1.jsonl)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+        help="Output directory for site model (e.g., ml/registry/cmdline-iforest-linux-site-acme/0.1.0/)",
+    )
+    parser.add_argument(
+        "--site-name", type=str, required=True, help="Site/tenant name for provenance"
+    )
+    parser.add_argument(
+        "--robustness-scenarios",
+        type=Path,
+        default=None,
+        help="Scenario YAML for global-model-floor check (optional)",
+    )
+    parser.add_argument(
+        "--global-model",
+        type=Path,
+        default=None,
+        help="Path to global model .pkl for floor check (optional)",
+    )
     args = parser.parse_args(argv)
     return SiteModelArgs(
         global_dataset=args.global_dataset,
@@ -233,9 +258,13 @@ def enforce_global_floor(args: SiteModelArgs, site_model: IsolationForest) -> No
         )
         print("\n".join(describe_global_floor(floor)))
         if not floor.passed:
-            raise ValueError("Global-model-floor check failed - site model does not meet baseline quality")
+            raise ValueError(
+                "Global-model-floor check failed - site model does not meet baseline quality"
+            )
     elif args.robustness_scenarios or args.global_model:
-        print("Warning: Skipping global-model-floor check (need both --robustness-scenarios and --global-model)")
+        print(
+            "Warning: Skipping global-model-floor check (need both --robustness-scenarios and --global-model)"
+        )
 
 
 def site_dataset_versions(args: SiteModelArgs, site_sample_count: int) -> list[DatasetVersion]:

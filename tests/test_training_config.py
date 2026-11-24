@@ -35,7 +35,11 @@ def test_each_forest_family_keeps_its_recorded_hyperparameters() -> None:
 
 
 def test_hyperparameters_keep_the_key_order_of_the_model_record() -> None:
-    assert list(CMDLINE_FOREST.hyperparameters()) == ["n_estimators", "contamination", "random_state"]
+    assert list(CMDLINE_FOREST.hyperparameters()) == [
+        "n_estimators",
+        "contamination",
+        "random_state",
+    ]
 
 
 def test_the_calibration_contract_keeps_its_fp_budget_rate_and_margin() -> None:

@@ -62,6 +62,10 @@ jobs:
         run: pip install -e ".[dev]"
       - name: ruff
         run: ruff check .
+      - name: ruff format
+        # `ruff check` does not look at formatting: 49 files had drifted before this
+        # step existed (#72).
+        run: ruff format --check .
       - name: mypy
         run: mypy
       - name: pytest

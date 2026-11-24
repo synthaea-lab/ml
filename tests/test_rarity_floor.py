@@ -42,12 +42,16 @@ def _models(withheld_fraction: float):
     train, cal_slice, test = slice(0, 1400), slice(1400, 1700), slice(1700, 2000)
     base = IsolationForest(n_estimators=100, random_state=42).fit(x_base[train])
     base_cal = calibrate_threshold(
-        base, x_base[cal_slice], fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
+        base,
+        x_base[cal_slice],
+        fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
         benign_rate_per_day=CALIBRATION.benign_rate_per_day,
     )
     cand = IsolationForest(n_estimators=100, random_state=42).fit(x_rare[train])
     cand_cal = calibrate_threshold(
-        cand, x_rare[cal_slice], fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
+        cand,
+        x_rare[cal_slice],
+        fp_budget=CALIBRATION.fp_budget_per_endpoint_day,
         benign_rate_per_day=CALIBRATION.benign_rate_per_day,
     )
     return cand, cand_cal, base, base_cal, x_base[test]
@@ -107,9 +111,9 @@ def test_the_scenarios_compare_the_candidate_with_the_baseline_at_each_models_ow
     # The baseline is (0.5, 0.5): 0.5 + 0.05 and 0.5 + 0.10 are exact in floating point, so the
     # boundary is really on the boundary and an exclusive comparison would fail the first and third.
     [
-        (robustness_card(0.55, 0.5), True),     # exactly the escape-rate tolerance: inclusive
+        (robustness_card(0.55, 0.5), True),  # exactly the escape-rate tolerance: inclusive
         (robustness_card(0.5501, 0.5), False),  # just past it
-        (robustness_card(0.5, 0.6), True),      # exactly the degradation tolerance: inclusive
+        (robustness_card(0.5, 0.6), True),  # exactly the degradation tolerance: inclusive
         (robustness_card(0.5, 0.6001), False),
     ],
 )
@@ -181,7 +185,10 @@ def test_a_failing_floor_stops_the_run_before_any_model_is_written(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, site_rarity_run: SiteRarityRun
 ) -> None:
     failing = rare.FloorResult(
-        reference_name="cmdline-only model", fp_reference=0.0, fp_withheld=0.9, scenario_lines=[],
+        reference_name="cmdline-only model",
+        fp_reference=0.0,
+        fp_withheld=0.9,
+        scenario_lines=[],
         failures=["withheld false-positive rate 90.00% is above 0.00% + 1.00%"],
     )
     monkeypatch.setattr(rare, "check_rarity_floor", lambda *a, **k: failing)
@@ -225,7 +232,9 @@ def test_withholding_zeroes_only_the_rarity_columns_of_a_share_of_the_chosen_row
     assert np.array_equal(out[700:], x[700:]), "rows outside the slice never change"
     withheld = (out[:700, 9:] == 0.0).all(axis=1)
     assert 0.25 < withheld.mean() < 0.35
-    assert ((out[:700, 9:] == 1.0).all(axis=1) | withheld).all(), "a row is either kept or withheld whole"
+    assert ((out[:700, 9:] == 1.0).all(axis=1) | withheld).all(), (
+        "a row is either kept or withheld whole"
+    )
 
 
 def test_withholding_is_deterministic_and_a_fraction_of_zero_changes_nothing() -> None:

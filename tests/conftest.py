@@ -52,8 +52,15 @@ def site_rarity_run(tmp_path: Path) -> SiteRarityRun:
     def run(*extra: str) -> Path:
         out = tmp_path / "site-model"
         argv = [
-            "--site-corpus", str(write_site_corpus(tmp_path)),
-            "--site-name", "acme", "--output-dir", str(out), "--min-hosts", "3", *extra,
+            "--site-corpus",
+            str(write_site_corpus(tmp_path)),
+            "--site-name",
+            "acme",
+            "--output-dir",
+            str(out),
+            "--min-hosts",
+            "3",
+            *extra,
         ]
         assert rare.main(argv) == 0
         return out

@@ -137,7 +137,9 @@ def test_a_site_model_within_tolerance_of_the_global_model_passes_the_floor(
 ) -> None:
     evaluated = _stub_robustness(
         monkeypatch,
-        site=robustness_card(0.10 + FLOOR_TOLERANCE.escape_rate, 0.20 + FLOOR_TOLERANCE.median_degradation),
+        site=robustness_card(
+            0.10 + FLOOR_TOLERANCE.escape_rate, 0.20 + FLOOR_TOLERANCE.median_degradation
+        ),
         global_=robustness_card(0.10, 0.20),
     )
 
@@ -152,7 +154,9 @@ def test_a_site_model_within_tolerance_of_the_global_model_passes_the_floor(
 def test_a_site_model_that_escapes_more_than_the_global_model_fails_the_floor(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    _stub_robustness(monkeypatch, site=robustness_card(0.30, 0.20), global_=robustness_card(0.10, 0.20))
+    _stub_robustness(
+        monkeypatch, site=robustness_card(0.30, 0.20), global_=robustness_card(0.10, 0.20)
+    )
 
     with pytest.raises(ValueError, match="Global-model-floor check failed"):
         _run_trainer(tmp_path, *_floor_args(tmp_path))
@@ -167,7 +171,9 @@ def test_a_site_model_that_escapes_more_than_the_global_model_fails_the_floor(
 def test_a_site_model_that_degrades_more_than_the_global_model_fails_the_floor(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    _stub_robustness(monkeypatch, site=robustness_card(0.10, 0.50), global_=robustness_card(0.10, 0.20))
+    _stub_robustness(
+        monkeypatch, site=robustness_card(0.10, 0.50), global_=robustness_card(0.10, 0.20)
+    )
 
     with pytest.raises(ValueError, match="Global-model-floor check failed"):
         _run_trainer(tmp_path, *_floor_args(tmp_path))
@@ -184,7 +190,9 @@ def test_the_floor_is_skipped_with_a_warning_when_only_one_of_its_inputs_is_give
     capsys: pytest.CaptureFixture[str],
     given: str,
 ) -> None:
-    evaluated = _stub_robustness(monkeypatch, site=robustness_card(1.0, 1.0), global_=robustness_card(0.0, 0.0))
+    evaluated = _stub_robustness(
+        monkeypatch, site=robustness_card(1.0, 1.0), global_=robustness_card(0.0, 0.0)
+    )
     floor_args = _floor_args(tmp_path)
     one_input = floor_args[floor_args.index(given) : floor_args.index(given) + 2]
 

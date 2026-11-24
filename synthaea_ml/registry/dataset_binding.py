@@ -25,9 +25,7 @@ def default_dataset_name(baseline_dir: Path) -> str:
     """
     manifest = load_manifest(baseline_dir)
     capture_day = manifest.capture_start[:10]  # "2026-09-11" from ISO string
-    return (
-        f"{manifest.platform}__{manifest.workload_label}__{manifest.host_id}__{capture_day}"
-    )
+    return f"{manifest.platform}__{manifest.workload_label}__{manifest.host_id}__{capture_day}"
 
 
 def dataset_version_from_manifest(

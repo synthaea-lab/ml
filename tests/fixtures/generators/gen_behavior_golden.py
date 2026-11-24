@@ -40,7 +40,13 @@ def exi(ts_ms: int, image_path: str, cmdline: str) -> dict:
 
 
 def cn6(ts_ms: int, daddr: str, dport: int) -> dict:
-    return {"type": "connect", "ts_ns": ts_ms * MS, "daddr_v6": daddr, "dport": dport, "is_ipv6": True}
+    return {
+        "type": "connect",
+        "ts_ns": ts_ms * MS,
+        "daddr_v6": daddr,
+        "dport": dport,
+        "is_ipv6": True,
+    }
 
 
 def cn(ts_ms: int, daddr: list[int], dport: int) -> dict:
@@ -80,8 +86,16 @@ CASES: dict[str, list[dict]] = {
     "connect_public_192_169": [cn(0, [192, 169, 1, 1], 445)],
     "connect_loopback": [cn(0, [127, 0, 0, 1], 8000)],
     "connect_private_then_public": [cn(0, [10, 0, 0, 1], 80), cn(5, [1, 1, 1, 1], 80)],
-    "connect_repeated_port": [cn(0, [1, 1, 1, 1], 80), cn(1, [1, 1, 1, 2], 80), cn(2, [1, 1, 1, 3], 80)],
-    "connect_distinct_ports": [cn(0, [1, 1, 1, 1], 80), cn(1, [1, 1, 1, 1], 443), cn(2, [1, 1, 1, 1], 4444)],
+    "connect_repeated_port": [
+        cn(0, [1, 1, 1, 1], 80),
+        cn(1, [1, 1, 1, 2], 80),
+        cn(2, [1, 1, 1, 3], 80),
+    ],
+    "connect_distinct_ports": [
+        cn(0, [1, 1, 1, 1], 80),
+        cn(1, [1, 1, 1, 1], 443),
+        cn(2, [1, 1, 1, 1], 4444),
+    ],
     "write_wronly": [fo(0, 0o1)],
     "write_rdwr": [fo(0, 0o2)],
     "write_creat_with_rdonly": [fo(0, 0o100)],
@@ -99,12 +113,26 @@ CASES: dict[str, list[dict]] = {
     ],
     "delay_connect_before_exec_clamped": [cn(0, [8, 8, 8, 8], 80), ex(500, "/bin/sh\0")],
     "delay_write_before_exec_clamped": [fo(0, 0o1), ex(500, "/bin/sh\0")],
-    "delay_uses_first_connect": [ex(0, "/bin/sh\0"), cn(300, [8, 8, 8, 8], 80), cn(900, [8, 8, 8, 8], 81)],
+    "delay_uses_first_connect": [
+        ex(0, "/bin/sh\0"),
+        cn(300, [8, 8, 8, 8], 80),
+        cn(900, [8, 8, 8, 8], 81),
+    ],
     "delay_uses_first_write_only": [ex(0, "/bin/sh\0"), fo(100, 0), fo(250, 0o1), fo(400, 0o2)],
-    "delay_uses_first_exec": [ex(100, "/bin/sh\0"), ex(200, "/bin/ls\0"), cn(700, [8, 8, 8, 8], 80)],
+    "delay_uses_first_exec": [
+        ex(100, "/bin/sh\0"),
+        ex(200, "/bin/ls\0"),
+        cn(700, [8, 8, 8, 8], 80),
+    ],
     "delay_fractional_ms": [
         {"type": "exec", "ts_ns": 0, "cmdline": "/bin/sh\0"},
-        {"type": "connect", "ts_ns": 1_500_000, "daddr_v4": [8, 8, 8, 8], "dport": 80, "is_ipv6": False},
+        {
+            "type": "connect",
+            "ts_ns": 1_500_000,
+            "daddr_v4": [8, 8, 8, 8],
+            "dport": 80,
+            "is_ipv6": False,
+        },
     ],
     # agent#203 case 1: IPv6 destinations (Rust `is_non_global_ipv6`).
     "connect_ipv6_global": [cn6(0, "2606:4700:4700::1111", 443)],
@@ -120,7 +148,10 @@ CASES: dict[str, list[dict]] = {
     "connect_ipv6_v4_mapped_loopback_is_internal": [cn6(0, "::ffff:127.0.0.1", 443)],
     "connect_ipv6_v4_mapped_unspecified_is_internal": [cn6(0, "::ffff:0.0.0.0", 443)],
     "connect_ipv6_v4_mapped_public_is_external": [cn6(0, "::ffff:8.8.8.8", 443)],
-    "connect_ipv6_internal_then_global": [cn6(0, "fe80::1", 80), cn6(5, "2606:4700:4700::1111", 80)],
+    "connect_ipv6_internal_then_global": [
+        cn6(0, "fe80::1", 80),
+        cn6(5, "2606:4700:4700::1111", 80),
+    ],
     # agent#203 case 2: the unspecified IPv4 address is internal, `0.x.x.x` is not.
     "connect_unspecified_ipv4": [cn(0, [0, 0, 0, 0], 22)],
     "connect_zero_first_octet_not_unspecified": [cn(0, [0, 1, 2, 3], 22)],

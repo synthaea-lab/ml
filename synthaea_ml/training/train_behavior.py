@@ -119,9 +119,7 @@ def run(args: TrainerArgs) -> None:
     )
 
     export_onnx(forest.model, X_train, args.output_dir / MODEL_FILENAME)
-    write_scorer_metadata(
-        args.output_dir / METADATA_FILENAME, forest.calibration, forest.bounds
-    )
+    write_scorer_metadata(args.output_dir / METADATA_FILENAME, forest.calibration, forest.bounds)
 
     robustness_cards = evaluate_robustness(
         forest, args.robustness_scenarios, args.robustness_events, tier="T1"

@@ -74,9 +74,7 @@ def load_baseline(baseline_dir: Path) -> list[str]:
     """
     cmdlines = load_cmdlines(baseline_dir, "windows")
     unique = unique_in_order(cmdlines)
-    logger.info(
-        "Baseline: %d entries -> %d unique after deduplication", len(cmdlines), len(unique)
-    )
+    logger.info("Baseline: %d entries -> %d unique after deduplication", len(cmdlines), len(unique))
     return unique
 
 
