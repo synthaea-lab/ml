@@ -63,7 +63,7 @@ from synthaea_ml.training.config import BEHAVIOR_FOREST, BEHAVIOR_MIN_SAMPLES, C
 logger = logging.getLogger(__name__)
 
 # The baseline is the T1 vector without its lineage block: the lineage features come last.
-# The shipped T1 vector has no lineage (ADR-0034); this tool is what justified that, and what
+# The shipped T1 vector has no lineage; this tool is what justified that, and what
 # to re-run on a better capture, so it builds its own 23-column vector: T1 plus the lineage.
 BASELINE_FEATURE_COUNT = t1.FEATURE_COUNT
 MEASURED_FEATURE_COUNT = t1.FEATURE_COUNT + len(lineage.FEATURE_NAMES)
@@ -223,7 +223,7 @@ def malicious_matrix(
 def benign_matrix(dataset_dirs: list[Path]) -> np.ndarray:
     """The deduplicated 23-feature matrix of every benign dataset's capture.
 
-    Not the trainer's `load_matrix`, which is the shipped 17-feature vector since ADR-0034: the
+    Not the trainer's `load_matrix`, which is the shipped 17-feature vector since the lineage decision: the
     comparison needs the lineage block on the benign side too, built by the same
     `measured_features` as the malicious matrix. Deduplicated by feature vector, as the trainer
     does, so a behavior seen 10 000 times adds one sample.

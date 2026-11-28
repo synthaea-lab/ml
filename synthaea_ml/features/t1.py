@@ -4,7 +4,7 @@ One definition shared by the robustness evaluation, the dataset builder and the 
 (issue #48/#617), so a model is scored on exactly the layout it was trained on. The Rust
 `ml::features::t1` builds the same vector in the same order.
 
-**No lineage block** (ADR-0034). Six lineage columns were tried and measured on real lab
+**No lineage block**. Six lineage columns were tried and measured on real lab
 captures: they raised detection of attacks with an odd parent, but lowered it for the
 92% whose lineage is ordinary, because an Isolation Forest spends random splits on
 columns that do not separate (paired AUC gain -0.08 +/- 0.02, worse in 20 of 20 splits).

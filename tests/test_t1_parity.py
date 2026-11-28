@@ -45,7 +45,7 @@ def test_the_recycled_pids_second_life_does_not_inherit_the_first() -> None:
 
 
 def test_the_t1_vector_is_cmdline_plus_correlation_without_the_lineage() -> None:
-    """#617 / ADR-0034: lineage failed to help the forest (it diluted it for the 92% of
+    """#617 / the lineage decision: lineage failed to help the forest (it diluted it for the 92% of
     attacks whose lineage is ordinary), so it is judged by rules, not by this vector."""
     from synthaea_ml.features import cmdline, correlation, lineage
 

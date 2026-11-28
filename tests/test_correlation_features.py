@@ -69,7 +69,7 @@ def test_repeated_destinations_are_counted_once_each() -> None:
 
 
 def test_network_flow_feeds_the_same_destination_sets_as_connect() -> None:
-    # ADR-0008: netlink-observed flows count as destinations; connect_count stays
+    # The correlation-vector design: netlink-observed flows count as destinations; connect_count stays
     # connect-only.
     events = [
         connect(7, 0, [127, 0, 0, 1], 4444),

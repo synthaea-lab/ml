@@ -62,7 +62,7 @@ def connect_ev(pid, ppid, t_ns, comm, daddr, dport):
 
 
 def network_flow_ev(pid, ppid, t_ns, comm, local_port, daddr, dport):
-    # ADR-0008: netlink-observed flow, absorbed into the same daddr/dport sets as
+    # The correlation-vector design: netlink-observed flow, absorbed into the same daddr/dport sets as
     # `connect`. bytes_*/packets_* are None here (nf_conntrack_acct=off default).
     return {
         "type": "network_flow",
@@ -98,7 +98,7 @@ EVENTS = [
     exec_ev(1002, 1001, 3 * S, "curl", "/usr/bin/curl", ["curl", "-fsS", "https://mirror.test/x"]),
     connect_ev(1002, 1001, 3 * S + 100_000_000, "curl", "203.0.113.9", 443),
     connect_ev(1002, 1001, 4 * S, "curl", "203.0.113.9", 443),
-    # netlink-only flow (ADR-0008): a distinct dest the `connect` uprobe never saw,
+    # netlink-only flow: a distinct dest the `connect` uprobe never saw,
     # exercising the T2 daddr/dport absorption end-to-end through capture parity.
     network_flow_ev(1002, 1001, 4 * S + 300_000_000, "curl", 51234, "203.0.113.20", 8443),
     exec_ev(1003, 1001, 5 * S, "sh", "/usr/bin/dash", ["sh", "-c", "./stage2"]),

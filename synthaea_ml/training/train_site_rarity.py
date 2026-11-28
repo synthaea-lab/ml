@@ -1,7 +1,7 @@
 """Recalibrates a site model with the rarity feature and records its effect (issue #640).
 
 Per-site adaptation (#49) rebuilds a T0 model from a site corpus. This entry point adds the
-fleet-derived signal ADR-0020 describes: is the executed image on this fleet's common set
+fleet-derived signal the fleet-prevalence design describes: is the executed image on this fleet's common set
 (seen on at least K hosts)? The model scores cmdline (9) + rarity (2) features, with the
 rarity values taken **point in time** from the corpus itself (`synthaea_ml.data.common_set`),
 never from today's counters.
@@ -41,7 +41,7 @@ a figure of the site, not of the global model in general.
 
 What this does not do: ship a model. The Rust extractor exists (`ml::features::rarity`, pinned to
 `rarity.py` by a golden file) but nothing hands the agent a common-set snapshot and no scorer
-loads an 11-feature model yet (ADR-0020). Detection quality with the rarity *known* is not
+loads an 11-feature model yet. Detection quality with the rarity *known* is not
 measured either: a scenario event has no image hash, so only the withheld state can be scored,
 and only the false-positive side is measured on benign corpora.
 
@@ -104,7 +104,7 @@ TRAINING_SCRIPT = "synthaea_ml/training/train_site_rarity.py"
 FEATURE_NAMES = [*cmdline.FEATURE_NAMES, *rarity.FEATURE_NAMES]
 
 DEFAULT_MIN_HOSTS = 5
-"""Hosts a snapshot must cover before the rarity evidence counts (ADR-0020)."""
+"""Hosts a snapshot must cover before the rarity evidence counts."""
 MIN_ROWS = 60
 """Fewer exec events cannot support a three-way time split and a conformal threshold."""
 TRAIN_FRACTION = 0.7

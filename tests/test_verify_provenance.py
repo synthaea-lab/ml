@@ -7,7 +7,7 @@ score/label consistency) is validated implicitly by the real registry entries;
 these tests focus on the provenance hook: legacy vs modern entries, strict vs
 interactive mode, and the failure modes verify_training_record exists to catch.
 
-Renamed from `training.json` to `model_record.json` in ADR-0009; the tests
+Renamed from `training.json` to `model_record.json` in the model-record design; the tests
 below use the new name consistently.
 """
 
@@ -159,7 +159,7 @@ def test_modern_entry_detects_missing_baseline(tmp_path: Path) -> None:
         verify_provenance(model_dir, baselines_root, scenarios_root, strict=False)
 
 
-# --- Modern entry with scenario replays (ADR-0009) ------------------------
+# --- Modern entry with scenario replays ------------------------
 
 
 def _model_dir_with_dataset_and_replay(

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field, replace
 SCHEMA_VERSION = 3
 """Bumped only when a field changes in a way that breaks readers.
 
-Bumped 1 → 2 in ADR-0009 for the addition of ``scenario_replays`` on
+Bumped 1 → 2 in the model-record design for the addition of ``scenario_replays`` on
 ``TrainingRecord`` and the rename of the on-disk file to
 ``model_record.json``.
 
@@ -92,14 +92,14 @@ class FeatureBounds:
     """Maximum allowed value per feature (inclusive)."""
 
 
-# ── Scenario replay binding (ADR-0009, schema v2) ───────────────────────────
+# ── Scenario replay binding (schema v2) ───────────────────────────
 
 
 @dataclass(frozen=True)
 class Environment:
     """OS/kernel/arch on which a replay ran. Minimum for v1;
     libc (glibc/musl) and toolchain versions are v2 candidates
-    (ADR-0009 § Deferred).
+    (the model-record design).
 
     ``kernel`` is ``platform.release()`` verbatim — cross-platform via the
     Python stdlib helper. On Linux/macOS the value equals ``uname -r``
@@ -117,7 +117,7 @@ class Environment:
 @dataclass(frozen=True)
 class ExpectedDetection:
     """One expected ``(technique, rule)`` tuple in a scenario. Mirror of the
-    yaml sidecar schema (#44's decision 2 / ADR-0009 § Schema).
+    yaml sidecar schema (#44's decision 2 / the model-record design).
 
     ``technique`` is an opaque string as ``Alert.technique`` and
     ``CorrelationAlert.rule`` produce it — it may be a single ATT&CK id
@@ -220,7 +220,7 @@ class TrainingRecord:
 
     Kept named ``TrainingRecord`` (rather than ``ModelRecord``) for continuity
     with existing callers; the on-disk filename and human semantics both moved
-    to a model-lifecycle framing in ADR-0009 but the Python type keeps its
+    to a model-lifecycle framing in the model-record design but the Python type keeps its
     historic name to minimise churn across the codebase.
     """
 
@@ -249,7 +249,7 @@ def with_scenario_replay(record: TrainingRecord, replay: ScenarioReplayResult) -
     return replace(record, scenario_replays=[*others, replay])
 
 
-# ── Passing criterion (ADR-0009 § Passing criterion) ────────────────────────
+# ── Passing criterion (the model-record design criterion) ────────────────────────
 
 
 def compute_passed(
@@ -259,7 +259,7 @@ def compute_passed(
     """Compute a scenario replay's ``passed`` value from its expected and
     observed detections.
 
-    Per ADR-0009: for each ``ExpectedDetection`` in the scenario, find the
+    Per the model-record design: for each ``ExpectedDetection`` in the scenario, find the
     matching observation by exact ``(technique, rule)`` string equality.
 
     * Missing observation → fail.

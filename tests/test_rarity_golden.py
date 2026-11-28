@@ -2,7 +2,7 @@
 
 The Rust counterpart (crates/ml/tests/rarity_golden.rs) consumes the same file: if either of
 the two tests breaks, one implementation has drifted from the other and a model trained on
-the rarity feature would be scored on vectors it never saw (ADR-0020, #640).
+the rarity feature would be scored on vectors it never saw (#640).
 """
 
 from pathlib import Path
