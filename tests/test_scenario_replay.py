@@ -1,5 +1,5 @@
 """Tests for `synthaea_ml.evaluation.scenario_replay` — the engine that turns a
-scenario yaml + a run's `alerts.ndjson` into ADR-0009's `ScenarioReplayResult`.
+scenario yaml + a run's `alerts.ndjson` into the model-record design's `ScenarioReplayResult`.
 
 The properties that need to hold:
 

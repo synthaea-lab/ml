@@ -37,7 +37,7 @@ def test_the_feature_distinguishes_rare_from_no_basis_to_say() -> None:
 
 
 def test_a_snapshot_over_too_few_hosts_withholds_the_evidence() -> None:
-    """A fleet that just enrolled: every binary would look rare. ADR-0020 withholds it."""
+    """A fleet that just enrolled: every binary would look rare. The fleet-prevalence design withholds it."""
     thin = CommonSetSnapshot(common=frozenset(), hosts_covered=2)
     assert rarity.extract_features(H2, thin, min_hosts=5) == [0.0, 0.0]
 

@@ -301,7 +301,7 @@ def test_the_benign_matrix_logs_its_counts_and_writes_nothing_to_stdout(
 def test_the_command_line_hands_the_comparison_a_23_column_benign_matrix(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The regression of the first real run after ADR-0034: `main` read the benign matrix with
+    """The regression of the first real run after the lineage decision: `main` read the benign matrix with
     the trainer's 17-column loader and `measure_gain` refused it ("must have 23 columns")."""
 
     class Reached(Exception):

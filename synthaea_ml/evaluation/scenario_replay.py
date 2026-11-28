@@ -1,13 +1,13 @@
-"""Scenario replay engine (issue #44, ADR-0009).
+"""Scenario replay engine (issue #44).
 
-ADR-0009 defined ``ExpectedDetection``/``ObservedDetection``/
+the model-record design defined ``ExpectedDetection``/``ObservedDetection``/
 ``ScenarioReplayResult`` (in ``registry.training_record``) and the passing
 criterion (``compute_passed``), but nothing ever produced a
 ``ScenarioReplayResult`` — PR #229/#232 (the scenario ``*.yaml`` sidecars)
 were explicitly scoped to format + conversion only, "pas de code moteur de
 replay". This module is that engine: given a scenario yaml and the
 ``alerts.ndjson`` a run against it produced, build the ``ScenarioReplayResult``
-ADR-0009's schema and gate expect.
+the model-record design's schema and gate expect.
 
 **What this does NOT do:** run the scenario itself. The scenario's own
 ``script``/``platform`` fields name a `.sh`/`.ps1` that needs a real lab VM
@@ -15,7 +15,7 @@ ADR-0009's schema and gate expect.
 that orchestration is a separate concern (SSH/VM lifecycle, not detection
 matching) left for a follow-up. This module starts one step downstream: it
 takes an already-produced ``alerts.ndjson`` (from any run, lab or CI) and
-turns it into the ADR-0009 record.
+turns it into the model-record design record.
 """
 
 from __future__ import annotations

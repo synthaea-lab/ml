@@ -30,7 +30,7 @@ from synthaea_ml.data.records import FlatEvent
 
 # Wire tags as `crates/schema::Event` serializes them (serde `rename_all = "snake_case"`
 # on the `FileOpen`/`NetworkFlow` variants): distinct from `correlation.py`'s "fileopen"
-# (see below). `network_flow` added by ADR-0008 (NetworkFlow absorbed into T2's
+# (see below). `network_flow` added by the correlation-vector design (NetworkFlow absorbed into T2's
 # daddr/dport sets alongside `connect`).
 RAW_EVENT_TYPES = ("exec", "connect", "file_open", "network_flow")
 

@@ -14,7 +14,7 @@ Expected input format: a list of JSON-Lines events, one object per event, as pro
     {"type": "network_flow", "pid": 1234, "ts_ns": 4000000000, "daddr_v4": [10,0,0,1],
                          "dport": 9999}
 
-`network_flow` (netlink-observed, ADR-0008) is absorbed into the same `unique_daddr_count`/
+`network_flow` (netlink-observed) is absorbed into the same `unique_daddr_count`/
 `unique_dport_count` sets as `connect` — see `extract_features` below. `connect_count` stays
 `connect`-only.
 
@@ -89,7 +89,7 @@ def extract_features(
     connect_count = sum(1 for e in pid_events if e["type"] == "connect")
     filewrite_count = sum(1 for e in pid_events if _is_file_write(e))
 
-    # ADR-0008: Connect and NetworkFlow (netlink) are absorbed into the same
+    # The correlation-vector design: Connect and NetworkFlow (netlink) are absorbed into the same
     # daddr/dport sets — one count of "distinct destinations touched" regardless of
     # which sensor captured them. connect_count above stays Connect-only.
     daddrs = {tuple(e["daddr_v4"]) for e in pid_events if e["type"] in ("connect", "network_flow")}

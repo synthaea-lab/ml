@@ -6,11 +6,11 @@ The properties that need to hold for the release gate to be trustworthy:
 - Building a DatasetVersion from a manifest fails loudly if the baseline was
   edited without regenerating the manifest (that's the whole point).
 - Writing a model record then loading it round-trips every field, including
-  the scenario replays added in ADR-0009 (schema v2).
+  the scenario replays added in the model-record design (schema v2).
 - `verify_training_record` catches all four failure modes it is meant to
   prevent: baseline moved, baseline mutated, scenario yaml mutated, cached
   `passed` field mutated.
-- The passing criterion (ADR-0009) treats under-detection, over-detection
+- The passing criterion treats under-detection, over-detection
   and missing observations symmetrically as failures.
 """
 
@@ -154,7 +154,7 @@ def test_write_training_record_round_trip(tmp_path: Path) -> None:
     assert loaded.dataset_versions == [dv]
     assert loaded.hyperparameters == {"n_estimators": 100, "contamination": 0.05}
     assert loaded.extra == {"commit_sha": "deadbeef"}
-    # ADR-0009: scenario_replays defaults to empty list when not supplied.
+    # The model-record design: scenario_replays defaults to empty list when not supplied.
     assert loaded.scenario_replays == []
 
 
@@ -273,7 +273,7 @@ def test_load_training_record_unsupported_schema_version_raises(tmp_path: Path) 
 
 
 def test_load_training_record_rejects_v1_schema(tmp_path: Path) -> None:
-    """ADR-0009: SCHEMA_VERSION bumped 1 → 2 with the scenario_replays
+    """the model-record design: SCHEMA_VERSION bumped 1 → 2 with the scenario_replays
     addition. A v1 record must be rejected explicitly, matching the
     manifest.py rejection pattern — a reader that silently upgrades v1 to
     v2 would leave the scenario_replays list empty and let a model with no
@@ -479,7 +479,7 @@ def test_an_unreadable_sibling_manifest_fails_the_lookup_naming_its_directory(
         verify_training_record(tmp_path / "model", baselines_root, tmp_path)
 
 
-# --- Passing criterion (ADR-0009) ------------------------------------------
+# --- Passing criterion ------------------------------------------
 
 
 def test_compute_passed_all_expected_in_range() -> None:

@@ -55,7 +55,7 @@ def _score_record(model: Any, record: dict[str, Any], tier: str) -> float:
     """Anomaly score of one record at `tier` (negative = more anomalous).
 
     T0 scores the command line alone; T1 also scores the correlation context. The lineage
-    is not in the T1 vector (ADR-0034), so no lineage mutator runs against it.
+    is not in the T1 vector, so no lineage mutator runs against it.
     """
     if tier == "T1":
         expected = getattr(model, "n_features_in_", t1.FEATURE_COUNT)
@@ -85,7 +85,7 @@ def _select_mutators_for_tier(tier: str) -> Sequence[Mutator]:
         return ALL_T0_MUTATORS
     if tier == "T1":
         # The command-line mutators apply (the cmdline block is part of the T1 vector). The
-        # lineage mutators do not: the parent is not scored by the model (ADR-0034), so an
+        # lineage mutators do not: the parent is not scored by the model, so an
         # escape rate over them would be a flattering zero.
         return ALL_T0_MUTATORS
     if tier == "T2":

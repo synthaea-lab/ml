@@ -1,7 +1,7 @@
 """Point-in-time common-set snapshots from a site corpus (issue #640).
 
 Training the rarity feature on today's counters would let the model learn from the future
-(a hash that only became common after the event looks common to it). ADR-0020 therefore
+(a hash that only became common after the event looks common to it). The fleet-prevalence design therefore
 requires the value *as of the event*. The server cannot supply that: its counters are not
 rebuilt from history, and the lake that would hold snapshot history does not exist. A site
 corpus (`{timestamp, event_type, event, agent_id}` per line, exported by
@@ -23,10 +23,10 @@ from synthaea_ml.features.rarity import CommonSetSnapshot, normalize_sha256
 from synthaea_ml.units import NS_PER_HOUR
 
 DEFAULT_K = 3
-"""Hosts an image must have run on to be in the common set (ADR-0020's K)."""
+"""Hosts an image must have run on to be in the common set (the fleet-prevalence design's K)."""
 
 DEFAULT_INTERVAL_NS = 24 * NS_PER_HOUR
-"""Cadence of published snapshots: daily, riding the content manifest (ADR-0016)."""
+"""Cadence of published snapshots: daily, riding the content manifest."""
 
 
 _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)

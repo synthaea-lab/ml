@@ -1,6 +1,6 @@
 """Regenerates the Python/Rust rarity-feature parity golden file (fixtures/rarity_golden.jsonl).
 
-The golden file locks the rarity feature (ADR-0020, #640): `synthaea_ml.features.rarity` (training,
+The golden file locks the rarity feature (#640): `synthaea_ml.features.rarity` (training,
 Python) and `ml::features::rarity` (inference, Rust) MUST produce the same two numbers for the
 same hash, snapshot and minimum coverage. Both test suites consume it:
 

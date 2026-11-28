@@ -1,7 +1,7 @@
 """Trains the T1 behavior Isolation Forest on the 17 cmdline + correlation features (issue #617).
 
 T1 scores one process incarnation at a time on cmdline (9) + correlation (8) features
-(`synthaea_ml.features.t1`; the lineage is judged by rules, ADR-0034). Unlike the T0
+(`synthaea_ml.features.t1`; the lineage is judged by rules). Unlike the T0
 trainers it cannot learn from a `baseline.jsonl` of command lines: the correlation block
 needs pids and process generations, so its input is a raw agent capture of normal activity.
 

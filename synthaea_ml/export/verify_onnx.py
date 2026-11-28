@@ -18,7 +18,7 @@ produced:
 In addition to the ONNX-runtime checks above, each registry version directory is
 required to carry a `model_record.json` recording the datasets it was trained on and
 the scenario replays and robustness cards that validated it (see
-`synthaea_ml.registry.training_record`, ADR-0009, rule 3 of `ml/README.md`).
+`synthaea_ml.registry.training_record`, rule 3 of `ml/README.md`).
 When present, `verify_training_record` is called: every referenced baseline must
 still exist under `ml/datasets/baselines/` and still hash to the value the record
 locked, and every scenario yaml a replay or a robustness card references must still exist
@@ -31,7 +31,7 @@ with a warning. In strict mode, they fail — that is what release CI runs. Togg
 with the `SYNTHAEA_STRICT_PROVENANCE=1` environment variable so the CLI stays
 compatible.
 
-Renamed from `training.json` to `model_record.json` in ADR-0009 (schema v2 bump
+Renamed from `training.json` to `model_record.json` in the model-record design (schema v2 bump
 carried the widening from dataset-only binding to dataset+replay binding).
 
 Every model is verified and each failure reported; the exit status is non-zero when any
@@ -209,7 +209,7 @@ def verify_provenance(
     `model_record.json` is present, `verify_training_record` re-checks every
     referenced baseline (existence, manifest verify, sample_sha256 match) and
     every referenced scenario replay (yaml existence, yaml sha256 match,
-    passed re-computation) — the release gate ADR-0009 mandates — and every
+    passed re-computation) — the release gate the model-record design mandates — and every
     robustness card's yaml (existence, yaml sha256 match).
 
     Raises:
@@ -264,7 +264,7 @@ def run(models: Sequence[Path]) -> int:
         )
         return 1
     strict = _is_strict_provenance()
-    # Scenarios live in the sibling `scenarios` repo (ADR-0009: replays bind to their source
+    # Scenarios live in the sibling `scenarios` repo (the model-record design: replays bind to their source
     # yaml by content hash). Resolved here, not at import, so `SYNTHAEA_ROOT` is read when the
     # command runs.
     scenarios = siblings.scenario_sidecars()

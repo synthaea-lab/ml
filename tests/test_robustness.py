@@ -168,7 +168,7 @@ class _ContextModel:
 
 
 def test_t1_does_not_run_the_lineage_mutators(dummy_scenario_yaml) -> None:
-    """#617: the lineage is no part of the T1 vector (ADR-0034), so a lineage mutation can
+    """#617: the lineage is no part of the T1 vector, so a lineage mutation can
     never move the T1 score and an escape rate over it would be a flattering zero."""
     card = run_robustness_evaluation(
         model=_ContextModel(),

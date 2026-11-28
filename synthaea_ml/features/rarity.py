@@ -1,6 +1,6 @@
 """The rarity feature: is the executed image on this fleet's common set? (issue #640)
 
-Defined by ADR-0020 (accepted): the server publishes, per tenant, a **common-set snapshot**
+Defined by the fleet-prevalence design (accepted): the server publishes, per tenant, a **common-set snapshot**
 of the image hashes seen on at least K hosts, and the device checks an executed image
 against it locally. The model input is therefore a small ordinal derived from that
 snapshot, never a host count: a count is not something the device can compute.
@@ -9,7 +9,7 @@ Two numbers, because "rare" must be distinguishable from "no basis to say":
 
 - `rarity_known`: 1.0 when a snapshot exists, covers enough hosts to mean anything and the
   event carries an image hash; otherwise 0.0. A fleet that just enrolled has an empty
-  snapshot, and without this every binary on it would look rare (ADR-0020 withholds the
+  snapshot, and without this every binary on it would look rare (the fleet-prevalence design withholds the
   evidence until the snapshot covers a stated number of hosts).
 - `image_in_common_set`: 1.0 when known and the hash is in the common set, else 0.0. Only
   meaningful when `rarity_known` is 1.0; 0.0 there means "rare or new on this fleet".

@@ -2,7 +2,7 @@
 rules and scenarios).
 
 The ML pipeline is developed on its own, but it reads files owned by siblings: the
-scenario sidecars of synthaea-lab/scenarios (ADR-0009 replays bind to them by content
+scenario sidecars of synthaea-lab/scenarios (the model-record design replays bind to them by content
 hash) and the agent's Rust parity fixtures. Clone the repositories side by side, so
 siblings sit next to this one::
 

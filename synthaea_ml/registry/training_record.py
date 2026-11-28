@@ -11,7 +11,7 @@ to answer:
   binding, still enforced by hashing each baseline's content against
   ``sample_sha256``;
 * "was this model replay-validated against the scenarios its card claims,
-  and did those replays pass?" — the new binding introduced by ADR-0009,
+  and did those replays pass?" — the new binding introduced by the model-record design,
   matched by hashing each scenario yaml against
   ``ScenarioReplayResult.scenario_yaml_sha256`` and by re-computing the
   ``passed`` field from the recorded counts.
@@ -40,12 +40,12 @@ on disk without invalidating the record, but a mutated baseline cannot pass
 ``verify_training_record`` even if it kept the same path. The same principle
 applies to scenario yamls via ``scenario_yaml_sha256``.
 
-Renamed from ``training.json`` in ADR-0009: the record now covers scenario
+Renamed from ``training.json`` in the model-record design: the record now covers scenario
 replay outcomes on top of dataset binding — no longer a "training" concept but
 a full model-lifecycle record. Schema version bumped 1 → 2; readers reject v1
 (matches the ``manifest.py`` pattern). No on-disk migration was required:
 ``training.json`` had never been materialised in the repo when this rename
-landed (verified pre-ADR).
+landed (verified before the rename).
 """
 
 from synthaea_ml.registry.codec import (

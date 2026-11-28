@@ -44,7 +44,7 @@ def verify_training_record(
       version's ``baseline_sha256`` and ``sample_count`` must still match the
       on-disk baseline's current manifest. Baseline moved → fail. Baseline
       mutated → fail.
-    * **Scenario replay provenance** (schema v2, ADR-0009): each replay's
+    * **Scenario replay provenance** (schema v2): each replay's
       ``scenario_yaml_sha256`` must still match ``scenarios_root/<name>.yaml``,
       and the recorded ``passed`` value must agree with a re-computation of
       the passing criterion (catches a mutated cache).
@@ -189,7 +189,7 @@ def verify_scenario_replay(
 ) -> None:
     """Re-verify one ``ScenarioReplayResult`` against on-disk state.
 
-    Two checks (ADR-0009):
+    Two checks:
 
     * ``scenario_yaml_sha256`` matches the current content hash of
       ``scenarios_root/<scenario_name>.yaml``.
